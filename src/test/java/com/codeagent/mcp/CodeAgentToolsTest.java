@@ -98,6 +98,19 @@ class CodeAgentToolsTest {
     }
 
     @Test
+    void 프론트엔드_코드의_위험한_패턴을_잡고_비밀값은_가린다() {
+        call("load_repository", Map.of("path", Path.of("src/test/resources/fixtures/owasp-app").toAbsolutePath().toString()));
+
+        String sinks = call("list_sinks", Map.of("repo", "owasp-app"));
+        assertThat(sinks).contains("[프론트엔드] [XSS CWE-79] React dangerouslySetInnerHTML",
+                "[프론트엔드] [TOKEN_STORAGE CWE-922]", "[프론트엔드] [OPEN_REDIRECT CWE-601]", "[프론트엔드] [POSTMESSAGE CWE-346]",
+                "[프론트엔드] [CODE_INJECTION CWE-95] eval", "[프론트엔드] [HARDCODED_SECRET CWE-798]", "AKIA****(가림)",
+                "frontend/src/legacy.js:2")
+                .doesNotContain("IOSFODNN7EXAMPLE", "node_modules", ".test.tsx");
+        assertThat(call("list_sink_paths", Map.of("repo", "owasp-app"))).doesNotContain("[프론트엔드]", "dangerouslySetInnerHTML");
+    }
+
+    @Test
     void OSV_검사를_끄면_라이브러리_목록만_보여준다() {
         CodeAgentTools offline = new CodeAgentTools(workspace, new RepositoryRegistry(workspace), new FindingStore(workspace.findings()),
                 new OsvClient("http://127.0.0.1:9", false, 1));

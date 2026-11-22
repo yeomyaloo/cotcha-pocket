@@ -135,8 +135,8 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 | `list_repositories` | Loaded repositories | ✅ |
 | `list_sink_paths` | Entry point → sink call paths (shortest per pair; riskiest categories first, then shortest) | ✅ |
 | `list_entry_points` | Spring MVC HTTP entry points | ✅ |
-| `list_sinks` | Sinks: SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, and IDOR (Spring Data `findById` / `deleteById`-style access by id, a missing-owner-check candidate; owner-scoped queries like `findByIdAndUser` are excluded; also id-only repository queries such as `findByBuyerId` or a single-id `@Query`, MyBatis `@Mapper` methods taking one id, and `save` of a `@RequestBody` object) | ✅ |
-| `check_dependencies` | Libraries in `pom.xml` / `build.gradle(.kts)` / `gradle/libs.versions.toml` / `gradle.lockfile` with known vulnerabilities from [OSV](https://osv.dev) (CVE, severity, fixed version). Only coordinates and versions are sent. Each scan is saved with its commit and compared with the previous one (version changes, new and resolved vulnerabilities) | |
+| `list_sinks` | Sinks: SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, IDOR, and frontend JS/TS/Vue/HTML patterns marked `[프론트엔드]` (XSS sinks like `dangerouslySetInnerHTML`/`innerHTML`/`v-html`, `eval`, open redirects, tokens in `localStorage`, `postMessage` without origin checks, hardcoded keys with the value masked). Frontend sinks have no entry point path (Spring Data `findById` / `deleteById`-style access by id, a missing-owner-check candidate; owner-scoped queries like `findByIdAndUser` are excluded; also id-only repository queries such as `findByBuyerId` or a single-id `@Query`, MyBatis `@Mapper` methods taking one id, and `save` of a `@RequestBody` object) | ✅ |
+| `check_dependencies` | Libraries in `pom.xml` / `build.gradle(.kts)` / `gradle/libs.versions.toml` / `gradle.lockfile` and npm's `package-lock.json` / `yarn.lock` / `pnpm-lock.yaml` / `package.json` with known vulnerabilities from [OSV](https://osv.dev) (CVE, severity, fixed version). Only coordinates and versions are sent. Each scan is saved with its commit and compared with the previous one (version changes, new and resolved vulnerabilities) | |
 | `find_code_nodes` | Find classes, methods, entry points and sinks by name | ✅ |
 | `get_callers` / `get_callees` | Who calls this / what this calls (interface → implementation included) | ✅ |
 | `read_file` | Read a file with line numbers (400 lines per call) | ✅ |
@@ -196,7 +196,7 @@ src/main/java/com/codeagent/mcp/
 
 ## Limitations
 
-- Analyzes Java / Spring MVC code only.
+- Analyzes Java / Spring MVC backends, plus pattern-based checks on frontend JS/TS/Vue/HTML (no JS parser or call graph, so frontend sinks are candidates found line by line).
 - `check_dependencies` does not run the build, so transitive dependencies are checked only when a `gradle.lockfile` exists, and versions set only by a BOM are reported as unknown.
 - The code graph is static analysis and can be wrong, which is why Claude must read the actual code before judging.
 - The analyzed code is sent to Anthropic through your chat app. Do not analyze code that must not leave your machine.
@@ -344,8 +344,8 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 | `list_repositories` | 불러온 저장소 목록 | ✅ |
 | `list_sink_paths` | 진입점 → 위험 지점 호출 경로 (쌍마다 가장 짧은 경로, 위험한 분류부터, 같은 분류면 짧은 순) | ✅ |
 | `list_entry_points` | Spring MVC HTTP 진입점 | ✅ |
-| `list_sinks` | 위험 지점 (SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, IDOR: Spring Data 저장소의 `findById`·`deleteById` 등 id 접근, 소유자 확인 누락 후보. `findByIdAndUser`처럼 주인 조건이 붙은 쿼리는 제외. 그 밖에 `findByBuyerId`처럼 식별자 하나로만 찾는 저장소 쿼리·id 하나만 받는 `@Query`, id 하나만 받는 MyBatis `@Mapper` 메서드, `@RequestBody` 객체를 그대로 넘기는 `save`도 잡음) | ✅ |
-| `check_dependencies` | `pom.xml`·`build.gradle(.kts)`·`gradle/libs.versions.toml`·`gradle.lockfile`의 라이브러리 중 [OSV](https://osv.dev)에 알려진 취약점이 있는 것(CVE, 심각도, 고친 버전). 라이브러리 좌표와 버전만 보낸다. 검사마다 커밋과 함께 기록하고 지난 검사와 비교한다(버전 변경, 새 취약점, 해결된 취약점) | |
+| `list_sinks` | 위험 지점 (SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, `[프론트엔드]`로 표시되는 프론트엔드 JS/TS/Vue/HTML 패턴(`dangerouslySetInnerHTML`·`innerHTML`·`v-html` 같은 XSS, `eval`, 오픈 리다이렉트, `localStorage` 토큰 저장, 출처 확인 없는 `postMessage`, 값을 가린 하드코딩 키. 진입점 경로는 없음), IDOR: Spring Data 저장소의 `findById`·`deleteById` 등 id 접근, 소유자 확인 누락 후보. `findByIdAndUser`처럼 주인 조건이 붙은 쿼리는 제외. 그 밖에 `findByBuyerId`처럼 식별자 하나로만 찾는 저장소 쿼리·id 하나만 받는 `@Query`, id 하나만 받는 MyBatis `@Mapper` 메서드, `@RequestBody` 객체를 그대로 넘기는 `save`도 잡음) | ✅ |
+| `check_dependencies` | `pom.xml`·`build.gradle(.kts)`·`gradle/libs.versions.toml`·`gradle.lockfile`과 npm의 `package-lock.json`·`yarn.lock`·`pnpm-lock.yaml`·`package.json`의 라이브러리 중 [OSV](https://osv.dev)에 알려진 취약점이 있는 것(CVE, 심각도, 고친 버전). 라이브러리 좌표와 버전만 보낸다. 검사마다 커밋과 함께 기록하고 지난 검사와 비교한다(버전 변경, 새 취약점, 해결된 취약점) | |
 | `find_code_nodes` | 이름으로 클래스·메서드·진입점·위험 지점 찾기 | ✅ |
 | `get_callers` / `get_callees` | 호출하는 쪽 / 호출되는 쪽 (인터페이스 → 구현 포함) | ✅ |
 | `read_file` | 줄 번호를 붙여 파일 읽기 (한 번에 400줄) | ✅ |
@@ -405,7 +405,7 @@ src/main/java/com/codeagent/mcp/
 
 ## 한계
 
-- Java/Spring MVC 코드만 분석한다.
+- Java/Spring MVC 백엔드를 분석하고, 프론트엔드 JS/TS/Vue/HTML은 패턴으로만 점검한다(JS 파서·호출 그래프가 없어서 줄 단위로 찾은 후보다).
 - `check_dependencies`는 빌드를 실행하지 않으므로 전이 의존성은 `gradle.lockfile`이 있을 때만 검사되고, BOM으로만 버전이 정해진 라이브러리는 버전 모름으로 나온다.
 - 코드 그래프는 정적 분석이라 틀릴 수 있다. 그래서 판단은 반드시 Claude가 실제 코드를 읽고 내리게 되어 있다.
 - 분석하는 코드는 채팅 앱을 통해 Anthropic으로 전송된다. 외부로 보내면 안 되는 코드는 분석하지 말 것.

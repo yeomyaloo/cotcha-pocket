@@ -180,6 +180,8 @@ public class CodeAgentTools {
                 "위험한 API 를 호출하는 위치 목록. 분류: SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, "
                         + "EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO(약한 해시·암호), WEAK_RANDOM(예측 가능한 난수), "
                         + "IDOR(Spring Data 저장소의 findById·deleteById 등 id 접근, 소유자 확인 누락 후보). "
+                        + "프론트엔드(JS/TS/Vue/HTML) 코드의 위험 지점([프론트엔드]: XSS, CODE_INJECTION, OPEN_REDIRECT, TOKEN_STORAGE, "
+                        + "POSTMESSAGE, HARDCODED_SECRET)은 HTTP 진입점 경로가 없으므로 list_sink_paths 에 나오지 않는다. "
                         + "진입점에서 닿지 않는 위험 지점도 포함한다.",
                 schema(props("repo", REPO, "category", string("분류로 거르기 (예: SQL)")), List.of("repo")),
                 true, false, args -> {
@@ -188,7 +190,8 @@ public class CodeAgentTools {
                     .filter(n -> category == null || category.equals(n.prop("category")))
                     .toList();
             return sinks.isEmpty() ? "위험 지점 없음" : sinks.stream()
-                    .map(n -> "#" + n.id() + " " + sinkLabel(n) + " · " + shortName(n.prop("method")) + " · " + location(n)
+                    .map(n -> "#" + n.id() + " " + ("true".equals(n.prop("frontend")) ? "[프론트엔드] " : "") + sinkLabel(n)
+                            + " · " + shortName(n.prop("method")) + " · " + location(n)
                             + "\n    " + n.prop("snippet"))
                     .collect(Collectors.joining("\n"));
         });
@@ -196,7 +199,7 @@ public class CodeAgentTools {
 
     ToolDef checkDependencies() {
         return new ToolDef("check_dependencies", "라이브러리 취약점",
-                "pom.xml·build.gradle·gradle/libs.versions.toml·gradle.lockfile 에서 라이브러리와 버전을 읽고, "
+                "pom.xml·build.gradle·gradle/libs.versions.toml·gradle.lockfile, npm 의 package-lock.json·yarn.lock·pnpm-lock.yaml·package.json 에서 라이브러리와 버전을 읽고, "
                         + "공개 취약점 DB(OSV, https://osv.dev)에 알려진 취약점(CVE·GHSA, 심각도, 고친 버전)이 있는 것을 보여준다 (OWASP A03). "
                         + "OSV 에는 라이브러리 좌표와 버전만 보내고 소스코드는 보내지 않는다. "
                         + "검사할 때마다 기록을 남기고 지난 검사와 비교해 바뀐 버전·새 취약점·해결된 취약점을 알려준다. "

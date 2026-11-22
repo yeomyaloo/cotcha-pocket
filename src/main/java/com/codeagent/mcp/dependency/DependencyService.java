@@ -16,7 +16,7 @@ public class DependencyService {
 
     private static final List<String> SEVERITY_ORDER = List.of("critical", "high", "medium", "low");
 
-    private static final int MAX_DEPENDENCIES = 500;
+    private static final int MAX_DEPENDENCIES = 3000;
 
     private final OsvClient osvClient;
     private final DependencyHistory history;

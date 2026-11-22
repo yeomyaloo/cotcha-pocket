@@ -80,7 +80,7 @@ public class OsvClient {
         ArrayNode queries = body.putArray("queries");
         for (Dependency d : batch) {
             ObjectNode query = queries.addObject();
-            query.putObject("package").put("ecosystem", "Maven").put("name", d.coordinate());
+            query.putObject("package").put("ecosystem", d.ecosystem()).put("name", d.osvName());
             query.put("version", d.version());
         }
         JsonNode response = send(HttpRequest.newBuilder(URI.create(baseUrl + "/v1/querybatch"))
@@ -130,7 +130,7 @@ public class OsvClient {
         node.path("database_specific").path("cwe_ids").forEach(c -> cwes.add(c.asString()));
         Set<String> fixed = new LinkedHashSet<>();
         for (JsonNode affected : node.path("affected")) {
-            if (!dependency.coordinate().equals(affected.path("package").path("name").asString())) {
+            if (!dependency.osvName().equals(affected.path("package").path("name").asString())) {
                 continue;
             }
             for (JsonNode range : affected.path("ranges")) {
