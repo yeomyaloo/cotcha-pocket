@@ -1,5 +1,6 @@
 package com.codeagent.mcp;
 
+import com.codeagent.mcp.dependency.OsvClient;
 import com.codeagent.mcp.findings.FindingStore;
 import com.codeagent.mcp.tools.Args;
 import com.codeagent.mcp.tools.CodeAgentTools;
@@ -77,6 +78,28 @@ class CodeAgentToolsTest {
         assertThat(call("list_sink_paths", Map.of("repo", "idor-app")))
                 .contains("GET /api/posts/{id}  →  [IDOR CWE-639] com.example.idor.post.PostRepository.findById")
                 .doesNotContain("/api/posts/mine/{id}");
+    }
+
+    @Test
+    void XXE_XSS_약한_암호화를_위험_지점으로_잡고_위험한_분류부터_보여준다() {
+        call("load_repository", Map.of("path", Path.of("src/test/resources/fixtures/owasp-app").toAbsolutePath().toString()));
+
+        assertThat(call("list_sinks", Map.of("repo", "owasp-app")))
+                .contains("XXE CWE-611", "org.dom4j.io.SAXReader.read", "XSS CWE-79", "WEAK_CRYPTO CWE-328", "WEAK_CRYPTO CWE-327", "WEAK_RANDOM CWE-330");
+        String paths = call("list_sink_paths", Map.of("repo", "owasp-app"));
+        assertThat(paths.indexOf("XXE")).isLessThan(paths.indexOf("XSS"));
+        assertThat(paths.indexOf("XSS")).isLessThan(paths.indexOf("WEAK_RANDOM"));
+    }
+
+    @Test
+    void OSV_검사를_끄면_라이브러리_목록만_보여준다() {
+        CodeAgentTools offline = new CodeAgentTools(workspace, new RepositoryRegistry(workspace), new FindingStore(workspace.findings()),
+                new OsvClient("http://127.0.0.1:9", false, 1));
+        run(offline, "load_repository", Map.of("path", Path.of("src/test/resources/fixtures/deps-maven").toAbsolutePath().toString()));
+
+        String result = run(offline, "check_dependencies", Map.of("repo", "deps-maven"));
+
+        assertThat(result).contains("빌드 파일: pom.xml", "라이브러리 4개", "알려진 취약점 검사 못 함", "MCP_CODE_AGENT_OSV=off");
     }
 
     @Test

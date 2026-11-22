@@ -60,7 +60,7 @@ Or inside a Claude Code session:
 
 Start a new session (or run `/reload-plugins`). The plugin brings:
 
-- the **`code-agent` MCP server** with 15 tools (prebuilt in `server/lib`, no build step), and
+- the **`code-agent` MCP server** with 16 tools (prebuilt in `server/lib`, no build step), and
 - the **`security-audit` skill**, which guides the audit: plan → investigate → verify → report.
 
 **You do not start any server yourself.** Claude Code launches the MCP server (a small Java process) in the background when a session starts and stops it when the session ends.
@@ -128,9 +128,10 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 |---|---|---|
 | `load_repository` | Load a folder path or a public Git https URL (shallow clone) and build the code graph | |
 | `list_repositories` | Loaded repositories | ✅ |
-| `list_sink_paths` | Entry point → sink call paths (shortest per pair, shortest first) | ✅ |
+| `list_sink_paths` | Entry point → sink call paths (shortest per pair; riskiest categories first, then shortest) | ✅ |
 | `list_entry_points` | Spring MVC HTTP entry points | ✅ |
-| `list_sinks` | Sinks: SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, and IDOR (Spring Data `findById` / `deleteById`-style access by id, a missing-owner-check candidate; owner-scoped queries like `findByIdAndUser` are excluded) | ✅ |
+| `list_sinks` | Sinks: SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, and IDOR (Spring Data `findById` / `deleteById`-style access by id, a missing-owner-check candidate; owner-scoped queries like `findByIdAndUser` are excluded) | ✅ |
+| `check_dependencies` | Libraries in `pom.xml` / `build.gradle(.kts)` / `gradle/libs.versions.toml` / `gradle.lockfile` with known vulnerabilities from [OSV](https://osv.dev) (CVE, severity, fixed version). Only coordinates and versions are sent | ✅ |
 | `find_code_nodes` | Find classes, methods, entry points and sinks by name | ✅ |
 | `get_callers` / `get_callees` | Who calls this / what this calls (interface → implementation included) | ✅ |
 | `read_file` | Read a file with line numbers (400 lines per call) | ✅ |
@@ -147,6 +148,8 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 |---|---|---|
 | `MCP_CODE_AGENT_HOME` | `~/.mcp-code-agent` | Where clones (`repos/`), findings (`findings/`) and reports (`reports/`) go |
 | `MCP_CODE_AGENT_GIT_HOSTS` | `github.com,gitlab.com,bitbucket.org` | Hosts allowed for cloning |
+| `MCP_CODE_AGENT_OSV` | `on` | `off` stops `check_dependencies` from asking OSV (it then only lists libraries) |
+| `MCP_CODE_AGENT_OSV_URL` | `https://api.osv.dev` | OSV API address |
 
 ## Security
 
@@ -181,6 +184,7 @@ src/main/java/com/codeagent/mcp/
 │   └── CodeGraph.java        in-memory graph, path search (BFS), call queries
 ├── source/                   Git URL policy, shallow clone
 ├── workspace/                settings, loaded repositories
+├── dependency/               build file parsing + OSV lookup (same as be-code-agent dependency/)
 ├── findings/                 findings, JSON storage, reports
 └── tools/                    MCP tool definitions, argument checks, file access
 ```
@@ -188,6 +192,7 @@ src/main/java/com/codeagent/mcp/
 ## Limitations
 
 - Analyzes Java / Spring MVC code only.
+- `check_dependencies` does not run the build, so transitive dependencies are checked only when a `gradle.lockfile` exists, and versions set only by a BOM are reported as unknown.
 - The code graph is static analysis and can be wrong, which is why Claude must read the actual code before judging.
 - The analyzed code is sent to Anthropic through your chat app. Do not analyze code that must not leave your machine.
 - Meant for each person to use in their own chat app, not to be offered to others as a service.
@@ -259,7 +264,7 @@ Claude Code 대화 안에서는:
 
 새 대화를 열면(또는 `/reload-plugins`) 바로 쓸 수 있다. 플러그인에 들어 있는 것:
 
-- **`code-agent` MCP 서버**와 도구 15개. `server/lib`에 미리 빌드돼 있어서 빌드할 필요가 없다.
+- **`code-agent` MCP 서버**와 도구 16개. `server/lib`에 미리 빌드돼 있어서 빌드할 필요가 없다.
 - **`security-audit` 스킬**: 계획 → 조사 → 검증 → 보고 순서로 분석을 이끈다.
 
 **서버를 직접 띄울 필요가 없다.** 대화를 시작하면 Claude Code가 MCP 서버(작은 Java 프로그램)를 백그라운드에서 알아서 실행하고, 대화가 끝나면 같이 끈다.
@@ -327,9 +332,10 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 |---|---|---|
 | `load_repository` | 폴더 경로 또는 공개 Git https 주소(얕은 클론)로 저장소를 불러와 코드 그래프를 만든다 | |
 | `list_repositories` | 불러온 저장소 목록 | ✅ |
-| `list_sink_paths` | 진입점 → 위험 지점 호출 경로 (쌍마다 가장 짧은 경로, 짧은 순) | ✅ |
+| `list_sink_paths` | 진입점 → 위험 지점 호출 경로 (쌍마다 가장 짧은 경로, 위험한 분류부터, 같은 분류면 짧은 순) | ✅ |
 | `list_entry_points` | Spring MVC HTTP 진입점 | ✅ |
-| `list_sinks` | 위험 지점 (SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, IDOR: Spring Data 저장소의 `findById`·`deleteById` 등 id 접근, 소유자 확인 누락 후보. `findByIdAndUser`처럼 주인 조건이 붙은 쿼리는 제외) | ✅ |
+| `list_sinks` | 위험 지점 (SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, IDOR: Spring Data 저장소의 `findById`·`deleteById` 등 id 접근, 소유자 확인 누락 후보. `findByIdAndUser`처럼 주인 조건이 붙은 쿼리는 제외) | ✅ |
+| `check_dependencies` | `pom.xml`·`build.gradle(.kts)`·`gradle/libs.versions.toml`·`gradle.lockfile`의 라이브러리 중 [OSV](https://osv.dev)에 알려진 취약점이 있는 것(CVE, 심각도, 고친 버전). 라이브러리 좌표와 버전만 보낸다 | ✅ |
 | `find_code_nodes` | 이름으로 클래스·메서드·진입점·위험 지점 찾기 | ✅ |
 | `get_callers` / `get_callees` | 호출하는 쪽 / 호출되는 쪽 (인터페이스 → 구현 포함) | ✅ |
 | `read_file` | 줄 번호를 붙여 파일 읽기 (한 번에 400줄) | ✅ |
@@ -346,6 +352,8 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 |---|---|---|
 | `MCP_CODE_AGENT_HOME` | `~/.mcp-code-agent` | 클론(`repos/`), 발견(`findings/`), 보고서(`reports/`)를 두는 폴더 |
 | `MCP_CODE_AGENT_GIT_HOSTS` | `github.com,gitlab.com,bitbucket.org` | 클론을 허용하는 호스트 |
+| `MCP_CODE_AGENT_OSV` | `on` | `off`면 `check_dependencies`가 OSV에 묻지 않는다 (라이브러리 목록만 보여줌) |
+| `MCP_CODE_AGENT_OSV_URL` | `https://api.osv.dev` | OSV API 주소 |
 
 ## 보안
 
@@ -380,6 +388,7 @@ src/main/java/com/codeagent/mcp/
 │   └── CodeGraph.java        메모리 그래프, 경로 탐색(BFS), 호출 관계 조회
 ├── source/                   Git 주소 검사, 얕은 클론
 ├── workspace/                설정, 불러온 저장소
+├── dependency/               빌드 파일 읽기 + OSV 조회 (be-code-agent 의 dependency/ 와 같음)
 ├── findings/                 발견, JSON 저장, 보고서
 └── tools/                    MCP 도구 정의, 인자 검사, 파일 접근
 ```
@@ -387,6 +396,7 @@ src/main/java/com/codeagent/mcp/
 ## 한계
 
 - Java/Spring MVC 코드만 분석한다.
+- `check_dependencies`는 빌드를 실행하지 않으므로 전이 의존성은 `gradle.lockfile`이 있을 때만 검사되고, BOM으로만 버전이 정해진 라이브러리는 버전 모름으로 나온다.
 - 코드 그래프는 정적 분석이라 틀릴 수 있다. 그래서 판단은 반드시 Claude가 실제 코드를 읽고 내리게 되어 있다.
 - 분석하는 코드는 채팅 앱을 통해 Anthropic으로 전송된다. 외부로 보내면 안 되는 코드는 분석하지 말 것.
 - 각자 자기 채팅 앱에 연결해 쓰는 용도다. 다른 사람에게 서비스로 제공하는 용도가 아니다.

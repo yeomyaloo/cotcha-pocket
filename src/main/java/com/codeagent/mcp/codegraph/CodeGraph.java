@@ -126,7 +126,7 @@ public class CodeGraph {
 
     /**
      * 진입점에서 위험 지점까지의 호출 경로. 같은 (진입점, 위험 지점) 쌍은 가장 짧은 경로 하나만 돌려준다.
-     * 진입점마다 BFS 를 하므로 처음 닿은 경로가 가장 짧다.
+     * 진입점마다 BFS 를 하므로 처음 닿은 경로가 가장 짧다. 위험한 분류(SinkRules.priority)부터 돌려준다.
      */
     public List<SinkPath> sinkPaths(int maxDepth, int limit) {
         List<SinkPath> result = new ArrayList<>();
@@ -156,7 +156,9 @@ public class CodeGraph {
                 }
             }
         }
-        result.sort(Comparator.comparingInt((SinkPath p) -> p.path().size())
+        // 위험한 분류부터, 같은 분류면 짧은 경로부터
+        result.sort(Comparator.comparingInt((SinkPath p) -> SinkRules.priority(p.sink().prop("category")))
+                .thenComparingInt(p -> p.path().size())
                 .thenComparing(p -> p.entryPoint().id())
                 .thenComparing(p -> p.sink().id()));
         return result.size() > limit ? List.copyOf(result.subList(0, limit)) : result;
