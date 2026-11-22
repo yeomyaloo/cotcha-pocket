@@ -1,0 +1,46 @@
+# 푸시·PR 마다 테스트를 돌고, 플러그인에 넣은 server/lib 를 다시 빌드할 수 있는지 확인한다
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: 테스트
+        run: ./gradlew test pluginServer --no-daemon
+
+      # 플러그인은 Java 17 이상에서 돌아야 한다 (README 의 요구 사항)
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Java 17 로 MCP 서버가 뜨는지 확인
+        run: |
+          java -version
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            | timeout 30 java -cp "server/lib/*" com.codeagent.mcp.McpCodeAgent > out.txt 2> err.txt || true
+          cat out.txt
+          grep -q '"serverInfo"' out.txt || (cat err.txt; exit 1)
+
+      - name: 테스트 결과 보관
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results
+          path: build/reports/tests/test
