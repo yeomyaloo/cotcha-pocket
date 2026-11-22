@@ -4,6 +4,7 @@ import com.codeagent.mcp.codegraph.CodeGraph;
 import com.codeagent.mcp.codegraph.CodeGraph.Node;
 import com.codeagent.mcp.codegraph.CodeGraph.SinkPath;
 import com.codeagent.mcp.codegraph.CodeNodeKind;
+import com.codeagent.mcp.dependency.DependencyHistory;
 import com.codeagent.mcp.dependency.DependencyService;
 import com.codeagent.mcp.dependency.OsvClient;
 import com.codeagent.mcp.findings.Finding;
@@ -59,7 +60,7 @@ public class CodeAgentTools {
         this.workspace = workspace;
         this.registry = registry;
         this.findings = findings;
-        this.dependencies = new DependencyService(osv);
+        this.dependencies = new DependencyService(osv, new DependencyHistory(workspace.dependencyScans()));
     }
 
     public List<ToolDef> all() {
@@ -108,6 +109,12 @@ public class CodeAgentTools {
             }
             if (existing > 0) {
                 sb.append("이전에 기록한 발견 ").append(existing).append("개가 있음 (list_findings). 처음부터 다시 하려면 clear_findings\n");
+                long otherCommit = findings.list(repo.id()).stream()
+                        .filter(f -> f.commitSha() != null && repo.commitSha() != null && !f.commitSha().equals(repo.commitSha()))
+                        .count();
+                if (otherCommit > 0) {
+                    sb.append("그중 ").append(otherCommit).append("개는 다른 커밋에서 기록함. 코드가 바뀌었을 수 있으니 다시 확인할 것\n");
+                }
             }
             return sb.toString();
         });
@@ -192,9 +199,14 @@ public class CodeAgentTools {
                 "pom.xml·build.gradle·gradle/libs.versions.toml·gradle.lockfile 에서 라이브러리와 버전을 읽고, "
                         + "공개 취약점 DB(OSV, https://osv.dev)에 알려진 취약점(CVE·GHSA, 심각도, 고친 버전)이 있는 것을 보여준다 (OWASP A03). "
                         + "OSV 에는 라이브러리 좌표와 버전만 보내고 소스코드는 보내지 않는다. "
+                        + "검사할 때마다 기록을 남기고 지난 검사와 비교해 바뀐 버전·새 취약점·해결된 취약점을 알려준다. "
                         + "취약한 라이브러리가 있으면, 그 취약점이 터지는 기능을 코드가 실제로 쓰는지 read_file·grep_code 로 확인한다.",
-                schema(props("repo", REPO), List.of("repo")), true, true,
-                args -> DependencyService.summarize(dependencies.check(repo(args).root())));
+                // 검사 기록을 파일로 남기므로 읽기 전용이 아니다
+                schema(props("repo", REPO), List.of("repo")), false, true,
+                args -> {
+                    LoadedRepository repo = repo(args);
+                    return DependencyService.summarize(dependencies.scan(repo.id(), repo.root(), repo.commitSha()));
+                });
     }
 
     ToolDef findCodeNodes() {
@@ -315,7 +327,7 @@ public class CodeAgentTools {
                     args.oneOf("severity", Set.copyOf(SEVERITIES)), args.oneOf("confidence", Set.copyOf(CONFIDENCES)),
                     args.string("description"), args.optionalString("exploit_scenario").orElse(null), evidence,
                     args.optionalString("entry_point").orElse(null), args.optionalString("sink").orElse(null),
-                    Status.OPEN, null, null));
+                    Status.OPEN, null, null, repo.commitSha()));
             return "발견 " + finding.id() + " 기록함 (검증 대기). 조사를 마친 뒤 반대 입장에서 다시 확인하고 submit_verdict 로 판정할 것";
         });
     }

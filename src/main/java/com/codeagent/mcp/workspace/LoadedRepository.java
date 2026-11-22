@@ -16,7 +16,7 @@ public record LoadedRepository(String id, Path root, String gitUrl, String branc
 
     public String origin() {
         if (gitUrl == null) {
-            return root.toString();
+            return commitSha == null ? root.toString() : root + " @ " + commitSha.substring(0, Math.min(12, commitSha.length()));
         }
         return gitUrl + " (" + branch + " @ " + commitSha.substring(0, Math.min(12, commitSha.length())) + ")";
     }

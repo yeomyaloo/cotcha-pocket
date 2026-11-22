@@ -59,6 +59,9 @@ public final class Reports {
             md.append("\n## ").append(f.id()).append(". ").append(f.title()).append("\n\n");
             md.append("- 판정: **").append(label(f.status())).append("** · 심각도: ").append(nullToDash(f.effectiveSeverity()))
                     .append(" · ").append(nullToDash(f.cwe())).append(" · 조사 확신: ").append(nullToDash(f.confidence())).append('\n');
+            if (f.commitSha() != null) {
+                md.append("- 기록한 커밋: `").append(f.commitSha(), 0, Math.min(12, f.commitSha().length())).append("`\n");
+            }
             if (f.entryPoint() != null || f.sink() != null) {
                 md.append("- 경로: `").append(nullToDash(f.entryPoint())).append("` → `").append(nullToDash(f.sink())).append("`\n");
             }

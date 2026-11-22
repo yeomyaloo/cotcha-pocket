@@ -41,7 +41,7 @@ public class FindingStore {
         List<Finding> findings = load(repositoryId);
         Finding finding = new Finding("F" + (findings.size() + 1), draft.title(), draft.cwe(), draft.severity(),
                 draft.confidence(), draft.description(), draft.exploitScenario(), List.copyOf(draft.evidence()),
-                draft.entryPoint(), draft.sink(), Status.OPEN, null, OffsetDateTime.now().toString());
+                draft.entryPoint(), draft.sink(), Status.OPEN, null, OffsetDateTime.now().toString(), draft.commitSha());
         findings.add(finding);
         save(repositoryId, findings);
         return finding;

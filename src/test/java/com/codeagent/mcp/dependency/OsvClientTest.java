@@ -74,7 +74,7 @@ class OsvClientTest {
 
     @Test
     void 계획_담당에게_취약한_라이브러리를_요약한다() {
-        DependencyService service = new DependencyService(client(true));
+        DependencyService service = new DependencyService(client(true), null);
 
         DependencyReport report = service.check(Path.of("src/test/resources/fixtures/deps-maven"));
 
@@ -88,7 +88,7 @@ class OsvClientTest {
     @Test
     void OSV_에_연결하지_못하면_목록만_돌려주고_이유를_알린다() {
         server.stop(0);
-        DependencyService service = new DependencyService(client(true));
+        DependencyService service = new DependencyService(client(true), null);
 
         DependencyReport report = service.check(Path.of("src/test/resources/fixtures/deps-maven"));
 
@@ -99,7 +99,7 @@ class OsvClientTest {
 
     @Test
     void 검사를_끄면_OSV_에_묻지_않는다() {
-        DependencyService service = new DependencyService(client(false));
+        DependencyService service = new DependencyService(client(false), null);
 
         DependencyReport report = service.check(Path.of("src/test/resources/fixtures/deps-maven"));
 

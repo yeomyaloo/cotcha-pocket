@@ -3,6 +3,7 @@ package com.codeagent.mcp.workspace;
 import com.codeagent.mcp.codegraph.CodeGraph;
 import com.codeagent.mcp.source.GitCloner;
 import com.codeagent.mcp.source.GitCloner.CloneResult;
+import com.codeagent.mcp.source.GitRevision;
 import com.codeagent.mcp.source.GitUrlPolicy;
 import com.codeagent.mcp.tools.ToolException;
 
@@ -43,7 +44,9 @@ public class RepositoryRegistry {
             throw new ToolException("폴더가 아님: " + root);
         }
         String id = idFor(name != null ? name : root.getFileName().toString());
-        return put(new LoadedRepository(id, root, null, null, null, CodeGraph.build(root), OffsetDateTime.now()));
+        // 폴더에 .git 이 있으면 HEAD 커밋을 기록한다 (발견·라이브러리 검사에 어느 커밋이었는지 남김)
+        String commit = GitRevision.head(root).orElse(null);
+        return put(new LoadedRepository(id, root, null, null, commit, CodeGraph.build(root), OffsetDateTime.now()));
     }
 
     /** 공개 Git 저장소를 얕게 클론해서 불러온다. 이미 받은 저장소면 최신 커밋으로 다시 받는다 */

@@ -8,6 +8,7 @@ import com.codeagent.mcp.tools.ToolDef;
 import com.codeagent.mcp.tools.ToolException;
 import com.codeagent.mcp.workspace.RepositoryRegistry;
 import com.codeagent.mcp.workspace.Workspace;
+import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -99,7 +100,53 @@ class CodeAgentToolsTest {
 
         String result = run(offline, "check_dependencies", Map.of("repo", "deps-maven"));
 
-        assertThat(result).contains("빌드 파일: pom.xml", "라이브러리 4개", "알려진 취약점 검사 못 함", "MCP_CODE_AGENT_OSV=off");
+        assertThat(result).contains("빌드 파일: pom.xml", "라이브러리 4개", "알려진 취약점 검사 못 함", "MCP_CODE_AGENT_OSV=off",
+                "이번이 첫 검사");
+    }
+
+    @Test
+    void 라이브러리_검사를_기록하고_커밋과_함께_지난_검사와_비교한다(@TempDir Path repo) throws Exception {
+        String pom = Files.readString(Path.of("src/test/resources/fixtures/deps-maven/pom.xml"));
+        Files.writeString(repo.resolve("pom.xml"), pom);
+        String first = commit(repo, "첫 커밋");
+        CodeAgentTools offline = new CodeAgentTools(workspace, new RepositoryRegistry(workspace), new FindingStore(workspace.findings()),
+                new OsvClient("http://127.0.0.1:9", false, 1));
+        // 폴더에 .git 이 있으면 HEAD 커밋을 기록한다
+        assertThat(run(offline, "load_repository", Map.of("path", repo.toString(), "name", "deps"))).contains("@ " + first.substring(0, 12));
+        run(offline, "check_dependencies", Map.of("repo", "deps"));
+
+        Files.writeString(repo.resolve("pom.xml"), pom.replace("<snakeyaml.version>1.29</snakeyaml.version>", "<snakeyaml.version>2.0</snakeyaml.version>"));
+        commit(repo, "snakeyaml 올림");
+        run(offline, "load_repository", Map.of("path", repo.toString(), "name", "deps"));
+        String second = run(offline, "check_dependencies", Map.of("repo", "deps"));
+
+        assertThat(second).contains("커밋 " + first.substring(0, 12) + ")와 비교", "버전 변경 org.yaml:snakeyaml 1.29 → 2.0");
+        assertThat(Files.list(workspace.dependencyScans()).toList()).hasSize(1);
+    }
+
+    @Test
+    void 발견에_커밋을_남기고_다른_커밋에서_다시_불러오면_알린다(@TempDir Path repo) throws Exception {
+        Files.createDirectories(repo.resolve("src"));
+        Files.writeString(repo.resolve("src/A.java"), "class A {}\n");
+        String first = commit(repo, "첫 커밋");
+        call("load_repository", Map.of("path", repo.toString(), "name", "committed"));
+        call("record_finding", Map.of("repo", "committed", "title", "테스트 발견", "cwe", "CWE-89", "severity", "high",
+                "confidence", "high", "description", "설명", "evidence", List.of(Map.of("file", "src/A.java", "line", 1, "note", "여기"))));
+        assertThat(call("export_report", Map.of("repo", "committed"))).contains("기록한 커밋: `" + first.substring(0, 12) + "`");
+
+        Files.writeString(repo.resolve("src/A.java"), "class A { int x; }\n");
+        commit(repo, "바꿈");
+
+        assertThat(call("load_repository", Map.of("path", repo.toString(), "name", "committed")))
+                .contains("그중 1개는 다른 커밋에서 기록함");
+    }
+
+    private static String commit(Path repo, String message) throws Exception {
+        try (Git git = Files.isDirectory(repo.resolve(".git")) ? Git.open(repo.toFile()) : Git.init().setDirectory(repo.toFile()).call()) {
+            git.add().addFilepattern(".").call();
+            return git.commit().setMessage(message).setAuthor("test", "test@example.com").setCommitter("test", "test@example.com")
+                    .setSign(false).call().getName();
+        }
     }
 
     @Test

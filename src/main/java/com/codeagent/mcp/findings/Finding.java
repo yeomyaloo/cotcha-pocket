@@ -7,10 +7,11 @@ import java.util.List;
  *
  * @param entryPoint 외부 입력이 들어오는 진입점 (예: GET /api/users/search)
  * @param sink       위험 지점 API (예: org.springframework.jdbc.core.JdbcTemplate.queryForList)
+ * @param commitSha  기록할 때 분석한 커밋 (모르면 null)
  */
 public record Finding(String id, String title, String cwe, String severity, String confidence, String description,
                       String exploitScenario, List<Evidence> evidence, String entryPoint, String sink,
-                      Status status, Verification verification, String createdAt) {
+                      Status status, Verification verification, String createdAt, String commitSha) {
 
     public enum Status {
         /** 검증 대기 */
@@ -38,6 +39,6 @@ public record Finding(String id, String title, String cwe, String severity, Stri
 
     Finding withVerdict(Status status, Verification verification) {
         return new Finding(id, title, cwe, severity, confidence, description, exploitScenario, evidence, entryPoint, sink,
-                status, verification, createdAt);
+                status, verification, createdAt, commitSha);
     }
 }

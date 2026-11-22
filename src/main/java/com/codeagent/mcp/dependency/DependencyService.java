@@ -3,6 +3,7 @@ package com.codeagent.mcp.dependency;
 import com.codeagent.mcp.dependency.DependencyScanner.ScanResult;
 
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -18,9 +19,25 @@ public class DependencyService {
     private static final int MAX_DEPENDENCIES = 500;
 
     private final OsvClient osvClient;
+    private final DependencyHistory history;
 
-    public DependencyService(OsvClient osvClient) {
+    public DependencyService(OsvClient osvClient, DependencyHistory history) {
         this.osvClient = osvClient;
+        this.history = history;
+    }
+
+    /** 검사 한 번과 지난 검사와의 비교 (첫 검사면 diff 는 null) */
+    public record ScanView(long id, String commitSha, OffsetDateTime scannedAt, DependencyReport report, DependencyDiff diff) {
+    }
+
+    /** 지금 저장소를 검사하고 기록으로 남긴 뒤, 지난 검사와 비교한다 */
+    public ScanView scan(String repositoryId, Path repoRoot, String commitSha) {
+        DependencyReport report = check(repoRoot);
+        List<DependencyHistory.StoredScan> before = history.list(repositoryId);
+        DependencyHistory.StoredScan saved = history.add(repositoryId, commitSha, report);
+        DependencyDiff diff = before.isEmpty() ? null : DependencyDiff.between(before.get(0).id(), before.get(0).commitSha(),
+                before.get(0).scannedAt(), before.get(0).report(), report);
+        return new ScanView(saved.id(), commitSha, saved.scannedAt(), report, diff);
     }
 
     /** 라이브러리 하나와 그 취약점 */
@@ -74,7 +91,34 @@ public class DependencyService {
         return i < 0 ? SEVERITY_ORDER.size() : i;
     }
 
-    /** 계획 담당에게 보여줄 요약 */
+    /** Claude 에게 보여줄 요약. 지난 검사가 있으면 달라진 점도 붙인다 */
+    public static String summarize(ScanView scan) {
+        String summary = summarize(scan.report());
+        DependencyDiff diff = scan.diff();
+        if (diff == null) {
+            return summary + "\n지난 검사 기록 없음 (이번이 첫 검사)";
+        }
+        String previousCommit = diff.previousCommitSha() == null ? ""
+                : ", 커밋 " + diff.previousCommitSha().substring(0, Math.min(12, diff.previousCommitSha().length()));
+        StringBuilder out = new StringBuilder(summary).append("\n\n지난 검사(").append(diff.previousScannedAt().toLocalDate())
+                .append(previousCommit).append(")와 비교: ");
+        if (!diff.hasChanges()) {
+            return out.append("달라진 것 없음").toString();
+        }
+        out.append('\n');
+        diff.changed().forEach(c -> out.append("- 버전 변경 ").append(c.group()).append(':').append(c.artifact())
+                .append(' ').append(c.from()).append(" → ").append(c.to()).append('\n'));
+        diff.added().forEach(a -> out.append("- 추가 ").append(a).append('\n'));
+        diff.removed().forEach(r -> out.append("- 제거 ").append(r).append('\n'));
+        diff.newVulnerabilities().forEach(v -> out.append("- 새 취약점 ").append(v.displayId()).append(" [")
+                .append(v.severity() == null ? "심각도 모름" : v.severity()).append("] ").append(v.group()).append(':')
+                .append(v.artifact()).append(':').append(v.version()).append('\n'));
+        diff.resolvedVulnerabilities().forEach(v -> out.append("- 해결된 취약점 ").append(v.displayId()).append(' ')
+                .append(v.group()).append(':').append(v.artifact()).append('\n'));
+        return out.toString().stripTrailing();
+    }
+
+    /** 라이브러리 목록과 취약점 요약 */
     public static String summarize(DependencyReport report) {
         if (report.files().isEmpty()) {
             return "빌드 파일(pom.xml, build.gradle)을 찾지 못함";

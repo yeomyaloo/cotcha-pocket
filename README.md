@@ -131,12 +131,12 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 | `list_sink_paths` | Entry point → sink call paths (shortest per pair; riskiest categories first, then shortest) | ✅ |
 | `list_entry_points` | Spring MVC HTTP entry points | ✅ |
 | `list_sinks` | Sinks: SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, and IDOR (Spring Data `findById` / `deleteById`-style access by id, a missing-owner-check candidate; owner-scoped queries like `findByIdAndUser` are excluded) | ✅ |
-| `check_dependencies` | Libraries in `pom.xml` / `build.gradle(.kts)` / `gradle/libs.versions.toml` / `gradle.lockfile` with known vulnerabilities from [OSV](https://osv.dev) (CVE, severity, fixed version). Only coordinates and versions are sent | ✅ |
+| `check_dependencies` | Libraries in `pom.xml` / `build.gradle(.kts)` / `gradle/libs.versions.toml` / `gradle.lockfile` with known vulnerabilities from [OSV](https://osv.dev) (CVE, severity, fixed version). Only coordinates and versions are sent. Each scan is saved with its commit and compared with the previous one (version changes, new and resolved vulnerabilities) | |
 | `find_code_nodes` | Find classes, methods, entry points and sinks by name | ✅ |
 | `get_callers` / `get_callees` | Who calls this / what this calls (interface → implementation included) | ✅ |
 | `read_file` | Read a file with line numbers (400 lines per call) | ✅ |
 | `grep_code` | Regex search (look for defenses) | ✅ |
-| `record_finding` | Record a vulnerability (file:line evidence required; pending verification) | |
+| `record_finding` | Record a vulnerability (file:line evidence required; pending verification). The analyzed commit is saved with it (Git URL commit, or the folder's `.git` HEAD), and reloading at another commit warns that old findings may be stale | |
 | `submit_verdict` | Verdict for a finding: confirmed / rejected / uncertain | |
 | `list_findings` | Findings, ordered by verdict and severity | ✅ |
 | `export_report` | Save a Markdown or SARIF 2.1.0 report | |
@@ -146,7 +146,7 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 
 | Environment variable | Default | Description |
 |---|---|---|
-| `MCP_CODE_AGENT_HOME` | `~/.mcp-code-agent` | Where clones (`repos/`), findings (`findings/`) and reports (`reports/`) go |
+| `MCP_CODE_AGENT_HOME` | `~/.mcp-code-agent` | Where clones (`repos/`), findings (`findings/`), dependency scan history (`dependency-scans/`) and reports (`reports/`) go |
 | `MCP_CODE_AGENT_GIT_HOSTS` | `github.com,gitlab.com,bitbucket.org` | Hosts allowed for cloning |
 | `MCP_CODE_AGENT_OSV` | `on` | `off` stops `check_dependencies` from asking OSV (it then only lists libraries) |
 | `MCP_CODE_AGENT_OSV_URL` | `https://api.osv.dev` | OSV API address |
@@ -184,7 +184,7 @@ src/main/java/com/codeagent/mcp/
 │   └── CodeGraph.java        in-memory graph, path search (BFS), call queries
 ├── source/                   Git URL policy, shallow clone
 ├── workspace/                settings, loaded repositories
-├── dependency/               build file parsing + OSV lookup (same as be-code-agent dependency/)
+├── dependency/               build file parsing + OSV lookup, scan history and diff (same as be-code-agent dependency/)
 ├── findings/                 findings, JSON storage, reports
 └── tools/                    MCP tool definitions, argument checks, file access
 ```
@@ -335,12 +335,12 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 | `list_sink_paths` | 진입점 → 위험 지점 호출 경로 (쌍마다 가장 짧은 경로, 위험한 분류부터, 같은 분류면 짧은 순) | ✅ |
 | `list_entry_points` | Spring MVC HTTP 진입점 | ✅ |
 | `list_sinks` | 위험 지점 (SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, IDOR: Spring Data 저장소의 `findById`·`deleteById` 등 id 접근, 소유자 확인 누락 후보. `findByIdAndUser`처럼 주인 조건이 붙은 쿼리는 제외) | ✅ |
-| `check_dependencies` | `pom.xml`·`build.gradle(.kts)`·`gradle/libs.versions.toml`·`gradle.lockfile`의 라이브러리 중 [OSV](https://osv.dev)에 알려진 취약점이 있는 것(CVE, 심각도, 고친 버전). 라이브러리 좌표와 버전만 보낸다 | ✅ |
+| `check_dependencies` | `pom.xml`·`build.gradle(.kts)`·`gradle/libs.versions.toml`·`gradle.lockfile`의 라이브러리 중 [OSV](https://osv.dev)에 알려진 취약점이 있는 것(CVE, 심각도, 고친 버전). 라이브러리 좌표와 버전만 보낸다. 검사마다 커밋과 함께 기록하고 지난 검사와 비교한다(버전 변경, 새 취약점, 해결된 취약점) | |
 | `find_code_nodes` | 이름으로 클래스·메서드·진입점·위험 지점 찾기 | ✅ |
 | `get_callers` / `get_callees` | 호출하는 쪽 / 호출되는 쪽 (인터페이스 → 구현 포함) | ✅ |
 | `read_file` | 줄 번호를 붙여 파일 읽기 (한 번에 400줄) | ✅ |
 | `grep_code` | 정규식으로 코드 검색 (방어 장치 찾기) | ✅ |
-| `record_finding` | 취약점 기록 (근거 코드 위치 필수, 검증 대기 상태) | |
+| `record_finding` | 취약점 기록 (근거 코드 위치 필수, 검증 대기 상태). 분석한 커밋(Git 주소의 커밋 또는 폴더의 `.git` HEAD)이 함께 저장되고, 다른 커밋으로 다시 불러오면 예전 발견일 수 있다고 알려준다 | |
 | `submit_verdict` | 발견 판정: confirmed / rejected / uncertain | |
 | `list_findings` | 발견 목록 (판정·심각도 순) | ✅ |
 | `export_report` | Markdown 또는 SARIF 2.1.0 보고서 저장 | |
@@ -350,7 +350,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 
 | 환경 변수 | 기본값 | 설명 |
 |---|---|---|
-| `MCP_CODE_AGENT_HOME` | `~/.mcp-code-agent` | 클론(`repos/`), 발견(`findings/`), 보고서(`reports/`)를 두는 폴더 |
+| `MCP_CODE_AGENT_HOME` | `~/.mcp-code-agent` | 클론(`repos/`), 발견(`findings/`), 라이브러리 검사 기록(`dependency-scans/`), 보고서(`reports/`)를 두는 폴더 |
 | `MCP_CODE_AGENT_GIT_HOSTS` | `github.com,gitlab.com,bitbucket.org` | 클론을 허용하는 호스트 |
 | `MCP_CODE_AGENT_OSV` | `on` | `off`면 `check_dependencies`가 OSV에 묻지 않는다 (라이브러리 목록만 보여줌) |
 | `MCP_CODE_AGENT_OSV_URL` | `https://api.osv.dev` | OSV API 주소 |
@@ -388,7 +388,7 @@ src/main/java/com/codeagent/mcp/
 │   └── CodeGraph.java        메모리 그래프, 경로 탐색(BFS), 호출 관계 조회
 ├── source/                   Git 주소 검사, 얕은 클론
 ├── workspace/                설정, 불러온 저장소
-├── dependency/               빌드 파일 읽기 + OSV 조회 (be-code-agent 의 dependency/ 와 같음)
+├── dependency/               빌드 파일 읽기 + OSV 조회, 검사 기록과 비교 (be-code-agent 의 dependency/ 와 같음)
 ├── findings/                 발견, JSON 저장, 보고서
 └── tools/                    MCP 도구 정의, 인자 검사, 파일 접근
 ```

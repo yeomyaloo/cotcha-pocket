@@ -33,6 +33,10 @@ public record Workspace(Path home, List<String> gitHosts, long maxRepoBytes, int
         return home.resolve("findings");
     }
 
+    public Path dependencyScans() {
+        return home.resolve("dependency-scans");
+    }
+
     public Path reports() {
         return home.resolve("reports");
     }
