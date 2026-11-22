@@ -9,6 +9,7 @@
 ./gradlew installDist   # build/install/mcp-code-agent/bin/mcp-code-agent(.bat)
 ./gradlew pluginServer  # Claude Code 플러그인용 server/lib (커밋 대상)
 claude plugin validate . # 플러그인 구조 검사 (CLAUDE.md 경고 하나는 정상)
+python -m unittest discover -s benchmark   # 벤치마크 채점 스크립트 테스트
 ```
 
 - 빌드는 JDK 21 toolchain, 바이트코드는 `release 17`. 채팅 앱이 PATH의 java(17일 수 있음)로 띄우므로 Java 21 전용 API(`getFirst`, `addFirst` 등)를 쓰지 않는다.
@@ -19,6 +20,7 @@ claude plugin validate . # 플러그인 구조 검사 (CLAUDE.md 경고 하나�
 - `McpCodeAgent`: 서버 진입점. 도구는 `tools/CodeAgentTools.all()`, 프롬프트는 `Prompts`.
 - 새 도구는 `CodeAgentTools`에 `ToolDef`를 추가하고 `all()`에 넣는다. 입력 오류는 `ToolException`으로 던진다(isError 결과로 Claude에게 전달됨).
 - 파일 접근은 반드시 `RepoFiles.resolve()`로 경로를 검사한다(저장소 밖 차단).
+- 평가 하네스 `benchmark/` 는 be-code-agent 의 것과 같다(run.py 제외). 정답 파일은 분석 대상 폴더 밖에 두고, 앱에 힌트 주석을 달지 않는다. 고치면 두 저장소를 같이 맞춘다.
 - `codegraph/`의 `JavaProject`, `TypeResolver`, `EntryPointDetector`, `SinkRules`, `CodeGraphBuilder`, `CodeGraphDraft`와 `source/`는 be-code-agent에서 복사했다. 위험 지점 규칙이나 진입점 탐지를 고치면 두 저장소를 같이 맞춘다.
 
 ## 규칙

@@ -1,0 +1,53 @@
+# Benchmark
+
+An evaluation harness that measures how well an audit with this plugin finds vulnerabilities, and whether repeated audits of the same code reach the same conclusions. The same benchmark lives in be-code-agent, where `run.py` drives the backend; here you run the audit in Claude Code and score the exported SARIF.
+
+| File | What it is |
+|---|---|
+| `shop-app/` | A small Spring + React shop with **11 real vulnerabilities** and **10 safe look-alikes** (traps): each vulnerable spot has a safe twin of the same category. There are no hint comments in the code. |
+| `shop-app.expected.json` | The answer key: file, line range, sink line, accepted CWEs and entry point of each item. It lives **outside** `shop-app/` so Claude cannot read it while auditing. |
+| `score.py` | Scores one or more SARIF reports against the answer key: recall, precision, trap false positives, wrong CWE, duplicates and, for several runs, consistency. |
+| `test_score.py` | Tests for the scoring rules. |
+
+`BenchmarkTest` (part of `./gradlew test`, runs in CI) checks that every vulnerability and trap shows up in `list_sinks`, nothing else does, and each vulnerability with an entry point shows up in `list_sink_paths`.
+
+## Scoring an audit (manual)
+
+1. In Claude Code, start a fresh session for each run and ask: "Audit `<absolute path>/benchmark/shop-app` for security vulnerabilities". Approve the plan.
+2. At the end, have Claude call `export_report` with `format: sarif` and save it as `report-1.sarif`. Run `clear_findings` before the next run so findings don't carry over.
+3. Score:
+
+```bash
+python benchmark/score.py benchmark/shop-app.expected.json report-1.sarif report-2.sarif report-3.sarif
+python benchmark/score.py benchmark/shop-app.expected.json report-*.sarif --confirmed-only
+```
+
+Rules: a finding points at an item when one of its locations is inside the item's file and line range. With an accepted CWE it is a hit, with another CWE a wrong category. Pointing at a trap is a trap false positive; pointing at nothing is another false positive. Rejected findings are ignored. Consistency is the share of items that got the same outcome in every run, plus the mean Jaccard similarity between runs.
+
+---
+
+# 벤치마크
+
+이 플러그인으로 한 보안 분석이 취약점을 얼마나 잘 찾는지, 같은 코드를 다시 분석해도 같은 결론을 내는지 재는 평가 하네스다. be-code-agent 에도 같은 벤치마크가 있고 거기서는 `run.py` 가 백엔드를 돌린다. 여기서는 Claude Code 에서 분석하고 내보낸 SARIF 를 채점한다.
+
+| 파일 | 내용 |
+|---|---|
+| `shop-app/` | 작은 Spring + React 쇼핑몰. **진짜 취약점 11개**와 비슷하게 생겼지만 **안전한 코드 10개**(함정)를 섞었다. 취약한 곳마다 같은 분류의 안전한 짝이 있다. 코드에 힌트 주석은 없다. |
+| `shop-app.expected.json` | 정답 파일. 항목마다 파일, 줄 범위, 위험 지점 줄, 인정하는 CWE, 진입점을 적었다. Claude 가 분석 중에 읽지 못하도록 `shop-app/` **밖**에 둔다. |
+| `score.py` | SARIF 보고서를 정답과 비교해 채점한다. 재현율, 정밀도, 함정 오탐, 분류 틀림, 중복, 그리고 여러 번 돌렸으면 일관성. |
+| `test_score.py` | 채점 규칙 테스트. |
+
+`BenchmarkTest`(`./gradlew test` 에 포함, CI 에서 돈다)는 정답의 취약점과 함정이 모두 `list_sinks` 에 나오고 그 밖의 것은 없으며, 진입점이 있는 취약점은 `list_sink_paths` 에도 나오는지 확인한다.
+
+## 분석 채점하기 (수동)
+
+1. 실행마다 Claude Code 새 세션에서 "`<절대 경로>/benchmark/shop-app` 보안 취약점 분석해줘"라고 하고 계획을 승인한다.
+2. 끝나면 `export_report` 를 `format: sarif` 로 불러 `report-1.sarif` 로 저장한다. 다음 실행 전에 `clear_findings` 로 발견을 비운다.
+3. 채점한다.
+
+```bash
+python benchmark/score.py benchmark/shop-app.expected.json report-1.sarif report-2.sarif report-3.sarif
+python benchmark/score.py benchmark/shop-app.expected.json report-*.sarif --confirmed-only
+```
+
+규칙: 발견의 위치 중 하나가 항목의 파일·줄 범위 안에 있으면 그 항목을 가리킨 것이다. CWE 가 인정 목록에 있으면 맞힌 것, 다르면 분류 틀림이다. 함정을 가리키면 함정 오탐, 아무것도 가리키지 않으면 기타 오탐이다. 기각된 발견은 빼고 센다. 일관성은 모든 실행에서 같은 결론이 난 항목의 비율과 실행 간 평균 자카드 유사도다.

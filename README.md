@@ -175,6 +175,8 @@ When you change code, run `./gradlew pluginServer`, commit `server/lib`, and bum
 
 - `CodeAgentToolsTest`: each tool's output, input errors, finding storage and reports
 - `McpProtocolTest`: starts the server as a separate process with the SDK's MCP client and calls tools and prompts over real stdio
+- `BenchmarkTest`: the evaluation benchmark's answer key matches the code graph (every vulnerability and trap is a sink)
+- **Benchmark (evaluation harness)**: [`benchmark/`](benchmark/README.md) has a small shop app with 11 real vulnerabilities and 10 safe look-alikes, and an answer key kept outside the app folder. Audit it with the plugin, export SARIF, and `python benchmark/score.py` reports recall, precision, trap false positives and run-to-run consistency.
 
 ```
 .claude-plugin/
@@ -182,6 +184,7 @@ When you change code, run `./gradlew pluginServer`, commit `server/lib`, and bum
 └── marketplace.json          makes this repository a plugin marketplace
 skills/security-audit/        audit workflow skill
 server/lib/                   prebuilt server and dependencies (./gradlew pluginServer)
+benchmark/                    evaluation harness: shop-app (answer key outside), score.py
 src/main/java/com/codeagent/mcp/
 ├── McpCodeAgent.java         entry point: stdio MCP server, tool and prompt registration
 ├── Prompts.java              security_audit, verify_findings prompts and server instructions
@@ -384,6 +387,8 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 
 - `CodeAgentToolsTest`: 도구마다 결과와 입력 오류 처리, 발견 저장과 보고서
 - `McpProtocolTest`: SDK의 MCP 클라이언트로 서버를 별도 프로세스로 띄워, 실제 stdio 프로토콜로 도구와 프롬프트를 호출한다
+- `BenchmarkTest`: 평가 벤치마크의 정답이 코드 그래프와 맞는지 (취약점과 함정이 모두 위험 지점인지)
+- **벤치마크 (평가 하네스)**: [`benchmark/`](benchmark/README.md)에 진짜 취약점 11개와 안전한 함정 10개를 섞은 작은 쇼핑몰과, 앱 폴더 밖에 둔 정답 파일이 있다. 플러그인으로 분석하고 SARIF 로 내보내면 `python benchmark/score.py` 가 재현율, 정밀도, 함정 오탐, 실행 간 일관성을 알려준다.
 
 ```
 .claude-plugin/
@@ -391,6 +396,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 └── marketplace.json          이 저장소를 플러그인 마켓플레이스로 만듦
 skills/security-audit/        분석 순서 스킬
 server/lib/                   미리 빌드한 서버와 의존 라이브러리 (./gradlew pluginServer)
+benchmark/                    평가 하네스: shop-app(정답은 밖에), score.py
 src/main/java/com/codeagent/mcp/
 ├── McpCodeAgent.java         진입점. stdio MCP 서버, 도구·프롬프트 등록
 ├── Prompts.java              security_audit, verify_findings 프롬프트와 서버 안내문
