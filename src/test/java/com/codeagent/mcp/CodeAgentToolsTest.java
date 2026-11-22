@@ -69,7 +69,7 @@ class CodeAgentToolsTest {
     @Test
     void 저장소의_id_접근을_IDOR_후보로_잡고_주인_조건_쿼리는_제외한다() {
         Path idorApp = Path.of("src/test/resources/fixtures/idor-app").toAbsolutePath();
-        assertThat(call("load_repository", Map.of("path", idorApp.toString()))).contains("위험 지점 3", "경로(쌍) 3개");
+        assertThat(call("load_repository", Map.of("path", idorApp.toString()))).contains("위험 지점 8", "경로(쌍) 8개");
 
         assertThat(call("list_sinks", Map.of("repo", "idor-app", "category", "idor")))
                 .contains("[IDOR CWE-639] com.example.idor.post.PostRepository.findById",
@@ -79,6 +79,11 @@ class CodeAgentToolsTest {
         assertThat(call("list_sink_paths", Map.of("repo", "idor-app")))
                 .contains("GET /api/posts/{id}  →  [IDOR CWE-639] com.example.idor.post.PostRepository.findById")
                 .doesNotContain("/api/posts/mine/{id}");
+        // 저장소·매퍼에 선언한 id 조회, 요청 본문 그대로 저장도 후보다. 주인 조건이 같이 있으면 아니다
+        assertThat(call("list_sinks", Map.of("repo", "idor-app", "category", "idor")))
+                .contains("OrderMapper.selectById", "OrderMapper.deleteOrder", "OrderRepository.findDetail",
+                        "OrderRepository.findByBuyerId", "OrderRepository.save")
+                .doesNotContain("selectMine", "findMine", "findByAddress");
     }
 
     @Test
