@@ -67,7 +67,12 @@ Start a new session (or run `/reload-plugins`). The plugin brings:
 
 To check the connection, run `/mcp` inside Claude Code: `plugin:code-agent:code-agent` should show as connected. If it shows as failed, Claude Code usually could not find `java`: install Java 17 or later, make sure `java -version` works in a new terminal, then restart Claude Code.
 
-Update later with `claude plugin update code-agent@yeomyaloo-code-agent`.
+To update later, refresh the marketplace first (otherwise Claude Code keeps comparing against its old copy and says there is nothing new), then update and restart Claude Code:
+
+```bash
+claude plugin marketplace update yeomyaloo-code-agent
+claude plugin update code-agent@yeomyaloo-code-agent
+```
 
 > Looking for the web UI instead? That is a different setup with a real server (PostgreSQL + backend + web UI) started by `docker compose up`, and it needs an Anthropic API key. See [be-code-agent](https://github.com/yeomyaloo/be-code-agent#quick-start-with-docker-recommended).
 
@@ -271,7 +276,12 @@ Claude Code 대화 안에서는:
 
 연결을 확인하려면 Claude Code 안에서 `/mcp`를 입력한다. `plugin:code-agent:code-agent`가 연결됨으로 보이면 정상이다. 실패로 나오면 대개 `java`를 못 찾은 것이다. Java 17 이상을 설치하고, 새 터미널에서 `java -version`이 되는지 확인한 뒤 Claude Code를 다시 켠다.
 
-나중에 업데이트하려면 `claude plugin update code-agent@yeomyaloo-code-agent`.
+나중에 업데이트할 때는 마켓플레이스를 먼저 새로 받은 뒤(안 그러면 예전 사본과 비교해서 새 버전이 없다고 나온다) 업데이트하고 Claude Code를 다시 켠다.
+
+```bash
+claude plugin marketplace update yeomyaloo-code-agent
+claude plugin update code-agent@yeomyaloo-code-agent
+```
 
 > 웹 화면으로 쓰고 싶다면 설치 방식이 다르다. 진짜 서버(PostgreSQL + 백엔드 + 웹 화면)를 `docker compose up`으로 띄우고, Anthropic API 키가 필요하다. [be-code-agent](https://github.com/yeomyaloo/be-code-agent#docker로-한-번에-실행-추천) 참고.
 
