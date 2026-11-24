@@ -45,13 +45,13 @@ public final class McpCodeAgent {
         CodeAgentTools tools = new CodeAgentTools(workspace, new RepositoryRegistry(workspace), new FindingStore(workspace.findings()));
 
         var server = McpServer.sync(new StdioServerTransportProvider(McpJsonDefaults.getMapper()))
-                .serverInfo("mcp-code-agent", VERSION)
+                .serverInfo("cotcha-pocket", VERSION)
                 .instructions(Prompts.INSTRUCTIONS)
                 .capabilities(ServerCapabilities.builder().tools(true).prompts(true).build())
                 .tools(tools.all().stream().map(McpCodeAgent::toolSpec).toList())
                 .prompts(prompts())
                 .build();
-        log.info("mcp-code-agent {} 시작 (작업 폴더 {})", VERSION, workspace.home());
+        log.info("cotcha-pocket {} 시작 (작업 폴더 {})", VERSION, workspace.home());
         // stdio 전송은 백그라운드 스레드에서 돈다. 클라이언트가 입력을 닫으면 프로세스가 끝난다
         Runtime.getRuntime().addShutdownHook(new Thread(server::close));
     }

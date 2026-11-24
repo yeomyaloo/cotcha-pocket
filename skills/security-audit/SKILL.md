@@ -1,11 +1,11 @@
 ---
 name: security-audit
-description: Audit a Java/Spring or Python/FastAPI codebase for security vulnerabilities with the code-agent MCP tools — plan the audit from the code graph (entry point → sink paths and endpoints), investigate each item by reading real code, record findings, re-verify every finding adversarially, and export a Markdown/SARIF report. Use when the user asks to security-review, audit, pentest-review, or find vulnerabilities (SQL injection, command injection, path traversal, deserialization, SSRF, XXE, XSS, missing authorization/IDOR, weak crypto, hardcoded secrets, vulnerable Maven/npm dependencies with known CVEs, and risky frontend JS/TS code) in a Java/Spring or Python/FastAPI repository, given a local folder path or a public Git URL.
+description: Audit a Java/Spring or Python/FastAPI codebase for security vulnerabilities with the Cotcha (cotcha-pocket) MCP tools — plan the audit from the code graph (entry point → sink paths and endpoints), investigate each item by reading real code, record findings, re-verify every finding adversarially, and export a Markdown/SARIF report. Use when the user asks to security-review, audit, pentest-review, or find vulnerabilities (SQL injection, command injection, path traversal, deserialization, SSRF, XXE, XSS, missing authorization/IDOR, weak crypto, hardcoded secrets, vulnerable Maven/npm dependencies with known CVEs, and risky frontend JS/TS code) in a Java/Spring or Python/FastAPI repository, given a local folder path or a public Git URL.
 ---
 
-# Java/Spring · Python/FastAPI security audit (code-agent)
+# Java/Spring · Python/FastAPI security audit (Cotcha)
 
-You lead a source-code security audit using the `code-agent` MCP tools. The MCP server is the hands (code graph, file access, records); you are the brain (planning and judgment). Reply in the user's language.
+You lead a source-code security audit using the Cotcha (`cotcha`) MCP tools. The MCP server is the hands (code graph, file access, records); you are the brain (planning and judgment). Reply in the user's language.
 
 The code graph is static analysis and can be wrong. **Every judgment must come from reading the actual code with `read_file`.** Only read the target code — never build or run it.
 

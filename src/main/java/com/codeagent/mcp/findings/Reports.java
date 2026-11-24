@@ -94,7 +94,7 @@ public final class Reports {
             if (f.status() == Status.REJECTED) {
                 continue;
             }
-            String ruleId = f.cwe() == null ? "code-agent" : f.cwe();
+            String ruleId = f.cwe() == null ? "cotcha" : f.cwe();
             ruleIndex.computeIfAbsent(ruleId, id -> {
                 Map<String, Object> rule = new LinkedHashMap<>();
                 rule.put("id", id);
@@ -130,8 +130,8 @@ public final class Reports {
                 "version", "2.1.0",
                 "runs", List.of(Map.of(
                         "tool", Map.of("driver", Map.of(
-                                "name", "mcp-code-agent",
-                                "informationUri", "https://github.com/yeomyaloo/mcp-code-agent",
+                                "name", "cotcha-pocket",
+                                "informationUri", "https://github.com/yeomyaloo/cotcha-pocket",
                                 "rules", rules)),
                         "results", results)));
         return JsonMapper.builder().enable(SerializationFeature.INDENT_OUTPUT).build().writeValueAsString(sarif);

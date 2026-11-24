@@ -1,4 +1,21 @@
-# mcp-code-agent
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/cotcha-logo-dark.svg">
+    <img src="docs/images/cotcha-logo.svg" alt="Cotcha" width="260">
+  </picture>
+</p>
+
+# cotcha-pocket
+
+> **Cotcha** = *"Caught ya!"* Cotcha follows untrusted input from where it enters your code to where it can do damage, catches the security bugs on the way, and keeps them in a jar.
+> *Every bug ends up in the jar.*
+
+| Repository | The name means | Role |
+|---|---|---|
+| [cotcha-trail](https://github.com/yeomyaloo/cotcha-trail) | the trail a bug leaves behind | Shared engine: parses code into a graph of entry points, sinks and the calls between them |
+| [cotcha-net](https://github.com/yeomyaloo/cotcha-net) | the bug-catching net | Server: Planner, Worker and Verifier agents sweep the code and double-check every catch (REST API, DB) |
+| [cotcha-pocket (this repo)](https://github.com/yeomyaloo/cotcha-pocket) | the bug box in your pocket | Claude Code plugin / MCP server: run the audit right from chat |
+| [cotcha-jar](https://github.com/yeomyaloo/cotcha-jar) | the jar where caught bugs go | Web UI: paths, findings and approvals at a glance |
 
 **An AI code security audit agent you run from chat (Claude Code plugin + MCP server)**
 
@@ -10,7 +27,7 @@ Connect it to Claude Code (or Claude Desktop) and say *"audit this repository fo
 
 - **Runs on your Claude Code login.** A Claude subscription (Pro, Max, Team, …) or an API key, whichever Claude Code uses. There is no separate API key to configure.
 - **No database, no server to host.** Only Java is required. The code graph lives in memory and findings are saved as JSON files.
-- A **standalone version** of [be-code-agent](https://github.com/yeomyaloo/be-code-agent) (Spring Boot backend + PostgreSQL + Anthropic API) that shares the same code graph engine.
+- A **standalone version** of [cotcha-net](https://github.com/yeomyaloo/cotcha-net) (Spring Boot backend + PostgreSQL + Anthropic API) that shares the same code graph engine.
 
 ## How it works: Claude is the brain, the MCP server is the hands
 
@@ -23,22 +40,22 @@ Connect it to Claude Code (or Claude Desktop) and say *"audit this repository fo
  └────────────────┬──────────────────────────────────▲──────────────┘
                   │ tool calls (MCP over stdio)        │ text results
  ┌────────────────▼──────────────────────────────────┴──────────────┐
- │  mcp-code-agent = hands                                           │
- │  · code graph: entry points, sinks, call edges (core-code-agent)  │
+ │  cotcha-pocket = hands                                           │
+ │  · code graph: entry points, sinks, call edges (cotcha-trail)  │
  │  · file read / grep, scoped to the repository                     │
  │  · findings and verdicts (~/.mcp-code-agent/findings/*.json)      │
  │  · reports (Markdown, SARIF 2.1.0)                                │
  └───────────────────────────────────────────────────────────────────┘
 ```
 
-| | be-code-agent | mcp-code-agent |
+| | cotcha-net | cotcha-pocket |
 |---|---|---|
 | Brain (LLM) | The backend calls the Anthropic API (API key) | Claude in your chat app (subscription or API key login) |
 | Agent loop | Backend `AgentLoop` | The chat app |
 | Planner / Worker / Verifier | Separate agents run by the backend | Claude takes each role in turn (Claude Code can split them into subagents) |
 | Human approval | Optional `requireApproval`: the job waits at `WAITING_APPROVAL` until you approve (or drop tasks / reject) in the web UI | Claude shows the numbered plan in chat and waits for your OK; reply with items to drop or add, or reject it |
 | Storage | PostgreSQL | Memory + JSON files |
-| UI | Web ([fe-code-agent](https://github.com/yeomyaloo/fe-code-agent)) | The chat window |
+| UI | Web ([cotcha-jar](https://github.com/yeomyaloo/cotcha-jar)) | The chat window |
 
 ## Install
 
@@ -47,34 +64,34 @@ Connect it to Claude Code (or Claude Desktop) and say *"audit this repository fo
 ### Claude Code plugin (recommended)
 
 ```bash
-claude plugin marketplace add yeomyaloo/mcp-code-agent
-claude plugin install code-agent@yeomyaloo-code-agent
+claude plugin marketplace add yeomyaloo/cotcha-pocket
+claude plugin install cotcha@cotcha
 ```
 
 Or inside a Claude Code session:
 
 ```
-/plugin marketplace add yeomyaloo/mcp-code-agent
-/plugin install code-agent@yeomyaloo-code-agent
+/plugin marketplace add yeomyaloo/cotcha-pocket
+/plugin install cotcha@cotcha
 ```
 
 Start a new session (or run `/reload-plugins`). The plugin brings:
 
-- the **`code-agent` MCP server** with 16 tools (prebuilt in `server/lib`, no build step), and
+- the **`cotcha` MCP server** with 16 tools (prebuilt in `server/lib`, no build step), and
 - the **`security-audit` skill**, which guides the audit: plan → investigate → verify → report.
 
 **You do not start any server yourself.** Claude Code launches the MCP server (a small Java process) in the background when a session starts and stops it when the session ends.
 
-To check the connection, run `/mcp` inside Claude Code: `plugin:code-agent:code-agent` should show as connected. If it shows as failed, Claude Code usually could not find `java`: install Java 17 or later, make sure `java -version` works in a new terminal, then restart Claude Code.
+To check the connection, run `/mcp` inside Claude Code: `plugin:cotcha:cotcha` should show as connected. If it shows as failed, Claude Code usually could not find `java`: install Java 17 or later, make sure `java -version` works in a new terminal, then restart Claude Code.
 
 To update later, refresh the marketplace first (otherwise Claude Code keeps comparing against its old copy and says there is nothing new), then update and restart Claude Code:
 
 ```bash
-claude plugin marketplace update yeomyaloo-code-agent
-claude plugin update code-agent@yeomyaloo-code-agent
+claude plugin marketplace update cotcha
+claude plugin update cotcha@cotcha
 ```
 
-> Looking for the web UI instead? That is a different setup with a real server (PostgreSQL + backend + web UI) started by `docker compose up`, and it needs an Anthropic API key. See [be-code-agent](https://github.com/yeomyaloo/be-code-agent#quick-start-with-docker-recommended).
+> Looking for the web UI instead? That is a different setup with a real server (PostgreSQL + backend + web UI) started by `docker compose up`, and it needs an Anthropic API key. See [cotcha-net](https://github.com/yeomyaloo/cotcha-net#quick-start-with-docker-recommended).
 
 ### Claude Desktop (manual)
 
@@ -83,9 +100,9 @@ Claude Desktop's chat does not load plugin-provided local MCP servers, so add th
 ```json
 {
   "mcpServers": {
-    "code-agent": {
+    "cotcha": {
       "command": "java",
-      "args": ["-Dfile.encoding=UTF-8", "-cp", "C:/path/to/mcp-code-agent/server/lib/*", "com.codeagent.mcp.McpCodeAgent"]
+      "args": ["-Dfile.encoding=UTF-8", "-cp", "C:/path/to/cotcha-pocket/server/lib/*", "com.codeagent.mcp.McpCodeAgent"]
     }
   }
 }
@@ -94,7 +111,7 @@ Claude Desktop's chat does not load plugin-provided local MCP servers, so add th
 ### Claude Code without the plugin (manual)
 
 ```bash
-claude mcp add code-agent --scope user -- java -Dfile.encoding=UTF-8 -cp "C:/path/to/mcp-code-agent/server/lib/*" com.codeagent.mcp.McpCodeAgent
+claude mcp add cotcha --scope user -- java -Dfile.encoding=UTF-8 -cp "C:/path/to/cotcha-pocket/server/lib/*" com.codeagent.mcp.McpCodeAgent
 ```
 
 ## Usage
@@ -111,7 +128,7 @@ Find only SQL injection in C:/work/my-api
 
 Before reading any code, Claude shows the plan (a numbered list of paths and endpoints to check) and waits for your approval. Reply "ok", or "drop 3 and 5", "also check the admin API", or "stop". If you don't want to be asked, say so in the request ("…, no need to confirm the plan").
 
-With the plugin, the `security-audit` skill kicks in for requests like these. You can also call it directly with `/code-agent:security-audit`. The MCP server also exposes two prompts, `security_audit` (target, max_paths) and `verify_findings` (repo).
+With the plugin, the `security-audit` skill kicks in for requests like these. You can also call it directly with `/cotcha:security-audit`. The MCP server also exposes two prompts, `security_audit` (target, max_paths) and `verify_findings` (repo).
 
 ### Example result
 
@@ -168,7 +185,7 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 ```bash
 ./gradlew test           # tests (no DB, network or API key)
 ./gradlew pluginServer   # rebuild server/lib for the plugin
-./gradlew installDist    # launch scripts in build/install/mcp-code-agent/bin
+./gradlew installDist    # launch scripts in build/install/cotcha-pocket/bin
 ```
 
 When you change code, run `./gradlew pluginServer`, commit `server/lib`, and bump `version` in `.claude-plugin/plugin.json` so installed plugins update.
@@ -188,11 +205,11 @@ benchmark/                    evaluation harness: shop-app (answer key outside),
 src/main/java/com/codeagent/mcp/
 ├── McpCodeAgent.java         entry point: stdio MCP server, tool and prompt registration
 ├── Prompts.java              security_audit, verify_findings prompts and server instructions
-├── codegraph/                code graph built by the shared engine core-code-agent (com.codeagent.core)
+├── codegraph/                code graph built by the shared engine cotcha-trail (com.codeagent.core)
 │   └── CodeGraph.java        in-memory graph, path search (BFS), call queries
 ├── source/                   Git URL policy, shallow clone
 ├── workspace/                settings, loaded repositories
-├── dependency/               build file parsing + OSV lookup, scan history and diff (same as be-code-agent dependency/)
+├── dependency/               build file parsing + OSV lookup, scan history and diff (same as cotcha-net dependency/)
 ├── findings/                 findings, JSON storage, reports
 └── tools/                    MCP tool definitions, argument checks, file access
 ```
@@ -215,7 +232,17 @@ src/main/java/com/codeagent/mcp/
 
 <a id="한국어"></a>
 
-# mcp-code-agent (한국어)
+# cotcha-pocket (한국어)
+
+> **Cotcha(코챠)** = *"Caught ya!"*(잡았다!)를 귀엽게 줄인 말. 외부 입력이 코드에 들어온 곳부터 위험한 곳까지 따라가며 보안 버그를 잡아 유리병에 담는다.
+> *Every bug ends up in the jar.* (잡은 버그는 전부 병 속으로)
+
+| 레포 | 이름 뜻 | 역할 |
+|---|---|---|
+| [cotcha-trail](https://github.com/yeomyaloo/cotcha-trail) | 벌레가 지나간 발자국 | 공용 엔진: 코드를 파싱해 진입점 → 위험 지점 경로(호출 그래프)를 그린다 |
+| [cotcha-net](https://github.com/yeomyaloo/cotcha-net) | 벌레 잡는 잠자리채 | 서버: Planner·Worker·Verifier 에이전트 팀이 코드를 훑고, 잡은 것을 다시 확인한다 (REST API, DB) |
+| [cotcha-pocket (이 레포)](https://github.com/yeomyaloo/cotcha-pocket) | 주머니 속 채집통 | Claude Code 플러그인 / MCP 서버: 채팅에서 바로 분석한다 |
+| [cotcha-jar](https://github.com/yeomyaloo/cotcha-jar) | 잡은 벌레를 모아 두는 유리병 | 웹 화면: 경로·발견·승인을 한눈에 본다 |
 
 **채팅에서 쓰는 AI 코드 보안 분석 에이전트 (Claude Code 플러그인 + MCP 서버)**
 
@@ -223,7 +250,7 @@ Claude Code나 Claude Desktop에 연결하고 "이 저장소 보안 분석해줘
 
 - **Claude Code에 로그인한 그대로 돈다.** Claude 구독(Pro, Max, Team 등)이든 API 키든 Claude Code가 쓰는 방식 그대로이고, 따로 설정할 API 키가 없다.
 - **DB도 서버도 필요 없다.** Java만 있으면 된다. 코드 그래프는 메모리에, 발견은 JSON 파일에 둔다.
-- [be-code-agent](https://github.com/yeomyaloo/be-code-agent)(Spring Boot 백엔드 + PostgreSQL + Anthropic API)와 같은 코드 그래프 엔진을 쓰는 **독립 버전**이다.
+- [cotcha-net](https://github.com/yeomyaloo/cotcha-net)(Spring Boot 백엔드 + PostgreSQL + Anthropic API)와 같은 코드 그래프 엔진을 쓰는 **독립 버전**이다.
 
 ## 구조: Claude는 두뇌, MCP 서버는 손발
 
@@ -236,22 +263,22 @@ Claude Code나 Claude Desktop에 연결하고 "이 저장소 보안 분석해줘
  └───────────────┬───────────────────────────────▲──────────────┘
                  │ 도구 호출 (MCP, 표준 입출력)    │ 결과 텍스트
  ┌───────────────▼───────────────────────────────┴──────────────┐
- │  mcp-code-agent = 손발                                       │
- │  · 코드 그래프: core-code-agent 로 진입점·위험 지점·호출 관계   │
+ │  cotcha-pocket = 손발                                       │
+ │  · 코드 그래프: cotcha-trail 로 진입점·위험 지점·호출 관계   │
  │  · 파일 읽기·검색 (저장소 밖 접근 차단)                        │
  │  · 발견 기록·판정 저장 (~/.mcp-code-agent/findings/*.json)     │
  │  · 보고서 (Markdown, SARIF 2.1.0)                            │
  └──────────────────────────────────────────────────────────────┘
 ```
 
-| | be-code-agent | mcp-code-agent |
+| | cotcha-net | cotcha-pocket |
 |---|---|---|
 | 두뇌(LLM) | 백엔드가 Anthropic API 호출 (API 키 필요) | 채팅 앱의 Claude (구독 또는 API 키로 로그인) |
 | 반복 실행 | 백엔드 `AgentLoop` | 채팅 앱이 알아서 반복 |
 | Planner / Worker / Verifier | 백엔드가 별도 에이전트로 실행 | 채팅의 Claude가 차례로 맡음 (Claude Code는 서브에이전트로 나눌 수 있음) |
 | 사람 승인 | 선택(`requireApproval`). 웹 화면에서 승인(할 일 빼기)·거절할 때까지 `WAITING_APPROVAL`로 멈춤 | Claude가 채팅에 번호 붙인 계획을 보여주고 답을 기다림. 뺄 항목·더할 항목을 말하거나 거절하면 됨 |
 | 저장 | PostgreSQL | 메모리 + JSON 파일 |
-| 화면 | 웹 ([fe-code-agent](https://github.com/yeomyaloo/fe-code-agent)) | 채팅창 |
+| 화면 | 웹 ([cotcha-jar](https://github.com/yeomyaloo/cotcha-jar)) | 채팅창 |
 
 ## 설치
 
@@ -260,34 +287,34 @@ Claude Code나 Claude Desktop에 연결하고 "이 저장소 보안 분석해줘
 ### Claude Code 플러그인 (추천)
 
 ```bash
-claude plugin marketplace add yeomyaloo/mcp-code-agent
-claude plugin install code-agent@yeomyaloo-code-agent
+claude plugin marketplace add yeomyaloo/cotcha-pocket
+claude plugin install cotcha@cotcha
 ```
 
 Claude Code 대화 안에서는:
 
 ```
-/plugin marketplace add yeomyaloo/mcp-code-agent
-/plugin install code-agent@yeomyaloo-code-agent
+/plugin marketplace add yeomyaloo/cotcha-pocket
+/plugin install cotcha@cotcha
 ```
 
 새 대화를 열면(또는 `/reload-plugins`) 바로 쓸 수 있다. 플러그인에 들어 있는 것:
 
-- **`code-agent` MCP 서버**와 도구 16개. `server/lib`에 미리 빌드돼 있어서 빌드할 필요가 없다.
+- **`cotcha` MCP 서버**와 도구 16개. `server/lib`에 미리 빌드돼 있어서 빌드할 필요가 없다.
 - **`security-audit` 스킬**: 계획 → 조사 → 검증 → 보고 순서로 분석을 이끈다.
 
 **서버를 직접 띄울 필요가 없다.** 대화를 시작하면 Claude Code가 MCP 서버(작은 Java 프로그램)를 백그라운드에서 알아서 실행하고, 대화가 끝나면 같이 끈다.
 
-연결을 확인하려면 Claude Code 안에서 `/mcp`를 입력한다. `plugin:code-agent:code-agent`가 연결됨으로 보이면 정상이다. 실패로 나오면 대개 `java`를 못 찾은 것이다. Java 17 이상을 설치하고, 새 터미널에서 `java -version`이 되는지 확인한 뒤 Claude Code를 다시 켠다.
+연결을 확인하려면 Claude Code 안에서 `/mcp`를 입력한다. `plugin:cotcha:cotcha`가 연결됨으로 보이면 정상이다. 실패로 나오면 대개 `java`를 못 찾은 것이다. Java 17 이상을 설치하고, 새 터미널에서 `java -version`이 되는지 확인한 뒤 Claude Code를 다시 켠다.
 
 나중에 업데이트할 때는 마켓플레이스를 먼저 새로 받은 뒤(안 그러면 예전 사본과 비교해서 새 버전이 없다고 나온다) 업데이트하고 Claude Code를 다시 켠다.
 
 ```bash
-claude plugin marketplace update yeomyaloo-code-agent
-claude plugin update code-agent@yeomyaloo-code-agent
+claude plugin marketplace update cotcha
+claude plugin update cotcha@cotcha
 ```
 
-> 웹 화면으로 쓰고 싶다면 설치 방식이 다르다. 진짜 서버(PostgreSQL + 백엔드 + 웹 화면)를 `docker compose up`으로 띄우고, Anthropic API 키가 필요하다. [be-code-agent](https://github.com/yeomyaloo/be-code-agent#docker로-한-번에-실행-추천) 참고.
+> 웹 화면으로 쓰고 싶다면 설치 방식이 다르다. 진짜 서버(PostgreSQL + 백엔드 + 웹 화면)를 `docker compose up`으로 띄우고, Anthropic API 키가 필요하다. [cotcha-net](https://github.com/yeomyaloo/cotcha-net#docker로-한-번에-실행-추천) 참고.
 
 ### Claude Desktop (직접 설정)
 
@@ -296,9 +323,9 @@ Claude Desktop 채팅은 플러그인의 로컬 MCP 서버를 읽지 않아서 �
 ```json
 {
   "mcpServers": {
-    "code-agent": {
+    "cotcha": {
       "command": "java",
-      "args": ["-Dfile.encoding=UTF-8", "-cp", "C:/path/to/mcp-code-agent/server/lib/*", "com.codeagent.mcp.McpCodeAgent"]
+      "args": ["-Dfile.encoding=UTF-8", "-cp", "C:/path/to/cotcha-pocket/server/lib/*", "com.codeagent.mcp.McpCodeAgent"]
     }
   }
 }
@@ -307,7 +334,7 @@ Claude Desktop 채팅은 플러그인의 로컬 MCP 서버를 읽지 않아서 �
 ### 플러그인 없이 Claude Code에 연결 (직접 설정)
 
 ```bash
-claude mcp add code-agent --scope user -- java -Dfile.encoding=UTF-8 -cp "C:/path/to/mcp-code-agent/server/lib/*" com.codeagent.mcp.McpCodeAgent
+claude mcp add cotcha --scope user -- java -Dfile.encoding=UTF-8 -cp "C:/path/to/cotcha-pocket/server/lib/*" com.codeagent.mcp.McpCodeAgent
 ```
 
 ## 사용법
@@ -324,7 +351,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 
 코드를 읽기 전에 Claude가 계획(조사할 경로·엔드포인트 번호 목록)을 보여주고 승인을 기다린다. "ㅇㅋ", "3번이랑 5번은 빼줘", "관리자 API도 봐줘", "그만" 처럼 답하면 된다. 묻지 않고 바로 하길 원하면 요청할 때 말한다("…, 계획 확인 없이 바로 해줘").
 
-플러그인을 쓰면 이런 요청에 `security-audit` 스킬이 알아서 붙는다. 직접 부르려면 `/code-agent:security-audit`. MCP 서버에도 프롬프트 두 개가 있다: `security_audit`(target, max_paths), `verify_findings`(repo).
+플러그인을 쓰면 이런 요청에 `security-audit` 스킬이 알아서 붙는다. 직접 부르려면 `/cotcha:security-audit`. MCP 서버에도 프롬프트 두 개가 있다: `security_audit`(target, max_paths), `verify_findings`(repo).
 
 ### 결과 예시
 
@@ -381,7 +408,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 ```bash
 ./gradlew test           # 테스트 (DB·네트워크·API 키 불필요)
 ./gradlew pluginServer   # 플러그인용 server/lib 다시 만들기
-./gradlew installDist    # build/install/mcp-code-agent/bin 실행 스크립트
+./gradlew installDist    # build/install/cotcha-pocket/bin 실행 스크립트
 ```
 
 코드를 바꾸면 `./gradlew pluginServer`로 `server/lib`를 다시 만들어 커밋하고, 설치한 사람들이 업데이트받도록 `.claude-plugin/plugin.json`의 `version`을 올린다.
@@ -401,11 +428,11 @@ benchmark/                    평가 하네스: shop-app(정답은 밖에), scor
 src/main/java/com/codeagent/mcp/
 ├── McpCodeAgent.java         진입점. stdio MCP 서버, 도구·프롬프트 등록
 ├── Prompts.java              security_audit, verify_findings 프롬프트와 서버 안내문
-├── codegraph/                공용 엔진 core-code-agent(com.codeagent.core)가 만든 코드 그래프
+├── codegraph/                공용 엔진 cotcha-trail(com.codeagent.core)가 만든 코드 그래프
 │   └── CodeGraph.java        메모리 그래프, 경로 탐색(BFS), 호출 관계 조회
 ├── source/                   Git 주소 검사, 얕은 클론
 ├── workspace/                설정, 불러온 저장소
-├── dependency/               빌드 파일 읽기 + OSV 조회, 검사 기록과 비교 (be-code-agent 의 dependency/ 와 같음)
+├── dependency/               빌드 파일 읽기 + OSV 조회, 검사 기록과 비교 (cotcha-net 의 dependency/ 와 같음)
 ├── findings/                 발견, JSON 저장, 보고서
 └── tools/                    MCP 도구 정의, 인자 검사, 파일 접근
 ```

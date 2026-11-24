@@ -6,7 +6,7 @@
 
 | Library | License |
 |---|---|
-| core-code-agent (shared code graph engine) | Apache-2.0 |
+| cotcha-trail (shared code graph engine) | Apache-2.0 |
 | tree-sitter-ng (`tree-sitter`, `tree-sitter-python`, bundled native libraries) | MIT |
 | MCP Java SDK (`mcp`, `mcp-core`, `mcp-json-jackson3`) | MIT |
 | JavaParser (`javaparser-core`, `javaparser-symbol-solver-core`) | Apache-2.0 / LGPL-3.0 (dual) |

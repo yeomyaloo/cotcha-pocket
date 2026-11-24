@@ -1,13 +1,13 @@
 {
-  "name": "yeomyaloo-code-agent",
+  "name": "cotcha",
   "owner": {
     "name": "hwiju yeom",
     "url": "https://github.com/yeomyaloo"
   },
-  "description": "AI code security audit agent for Java/Spring and Python/FastAPI (MCP server + skill)",
+  "description": "Cotcha: AI code security audit agent for Java/Spring and Python/FastAPI (MCP server + skill)",
   "plugins": [
     {
-      "name": "code-agent",
+      "name": "cotcha",
       "source": "./",
       "description": "Audit Java/Spring and Python/FastAPI source code for security vulnerabilities in chat (code graph, findings, verification, SARIF reports). Requires Java 17+."
     }
