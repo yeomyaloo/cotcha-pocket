@@ -1,6 +1,6 @@
 # mcp-code-agent
 
-채팅 앱(Claude Code, Claude Desktop)에 연결하는 stdio MCP 서버. Claude가 판단하고, 이 서버는 Java/Spring 코드 그래프·파일 읽기·발견 기록·보고서를 맡는다. be-code-agent(`../code-agent`)의 코드 그래프 엔진을 가져와 DB 없이 돌게 만든 독립 버전.
+채팅 앱(Claude Code, Claude Desktop)에 연결하는 stdio MCP 서버. Claude가 판단하고, 이 서버는 Java/Spring 코드 그래프·파일 읽기·발견 기록·보고서를 맡는다. 코드 그래프 엔진은 공용 라이브러리 core-code-agent(`../core-code-agent`, 패키지 `com.codeagent.core`)를 be-code-agent 와 같이 쓴다.
 
 ## 명령
 
@@ -21,7 +21,9 @@ python -m unittest discover -s benchmark   # 벤치마크 채점 스크립트 �
 - 새 도구는 `CodeAgentTools`에 `ToolDef`를 추가하고 `all()`에 넣는다. 입력 오류는 `ToolException`으로 던진다(isError 결과로 Claude에게 전달됨).
 - 파일 접근은 반드시 `RepoFiles.resolve()`로 경로를 검사한다(저장소 밖 차단).
 - 평가 하네스 `benchmark/` 는 be-code-agent 의 것과 같다(run.py 제외). 정답 파일은 분석 대상 폴더 밖에 두고, 앱에 힌트 주석을 달지 않는다. 고치면 두 저장소를 같이 맞춘다.
-- `codegraph/`의 `JavaProject`, `TypeResolver`, `EntryPointDetector`, `SinkRules`, `CodeGraphBuilder`, `CodeGraphDraft`와 `source/`는 be-code-agent에서 복사했다. 위험 지점 규칙이나 진입점 탐지를 고치면 두 저장소를 같이 맞춘다.
+- 코드 그래프 엔진(파싱, 진입점 탐지, 위험 지점 규칙)은 core-code-agent 에 있다. 이 저장소의 `codegraph/CodeGraph`는 `CodeGraphEngine.analyze()` 결과를 메모리 색인으로 옮기는 어댑터다. 규칙을 고치려면 core 를 고치고 버전을 올린 뒤 `build.gradle` 의존 버전을 맞춘다.
+- core 를 소스로 바로 쓰려면 `-PcoreCodeAgentDir=../core-code-agent`(composite build). 없으면 GitHub Packages 에서 받으므로 `gpr.user`/`gpr.key`(또는 `GITHUB_ACTOR`/`GITHUB_TOKEN`, `read:packages`)가 필요하다.
+- `source/`는 be-code-agent 에서 복사했다. 고치면 두 저장소를 같이 맞춘다.
 
 ## 규칙
 

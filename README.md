@@ -188,7 +188,7 @@ benchmark/                    evaluation harness: shop-app (answer key outside),
 src/main/java/com/codeagent/mcp/
 ├── McpCodeAgent.java         entry point: stdio MCP server, tool and prompt registration
 ├── Prompts.java              security_audit, verify_findings prompts and server instructions
-├── codegraph/                code graph (same engine as be-code-agent codegraph/ingest)
+├── codegraph/                code graph built by the shared engine core-code-agent (com.codeagent.core)
 │   └── CodeGraph.java        in-memory graph, path search (BFS), call queries
 ├── source/                   Git URL policy, shallow clone
 ├── workspace/                settings, loaded repositories
@@ -400,7 +400,7 @@ benchmark/                    평가 하네스: shop-app(정답은 밖에), scor
 src/main/java/com/codeagent/mcp/
 ├── McpCodeAgent.java         진입점. stdio MCP 서버, 도구·프롬프트 등록
 ├── Prompts.java              security_audit, verify_findings 프롬프트와 서버 안내문
-├── codegraph/                코드 그래프 (be-code-agent 의 codegraph/ingest 와 같은 엔진)
+├── codegraph/                공용 엔진 core-code-agent(com.codeagent.core)가 만든 코드 그래프
 │   └── CodeGraph.java        메모리 그래프, 경로 탐색(BFS), 호출 관계 조회
 ├── source/                   Git 주소 검사, 얕은 클론
 ├── workspace/                설정, 불러온 저장소
