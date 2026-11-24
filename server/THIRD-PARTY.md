@@ -6,6 +6,7 @@
 
 | Library | License |
 |---|---|
+| core-code-agent (shared code graph engine) | Apache-2.0 |
 | MCP Java SDK (`mcp`, `mcp-core`, `mcp-json-jackson3`) | MIT |
 | JavaParser (`javaparser-core`, `javaparser-symbol-solver-core`) | Apache-2.0 / LGPL-3.0 (dual) |
 | Javassist | Apache-2.0 / MPL-1.1 / LGPL-2.1 (tri) |

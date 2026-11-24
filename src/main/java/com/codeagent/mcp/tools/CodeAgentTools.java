@@ -3,7 +3,7 @@ package com.codeagent.mcp.tools;
 import com.codeagent.mcp.codegraph.CodeGraph;
 import com.codeagent.mcp.codegraph.CodeGraph.Node;
 import com.codeagent.mcp.codegraph.CodeGraph.SinkPath;
-import com.codeagent.mcp.codegraph.CodeNodeKind;
+import com.codeagent.core.model.CodeNodeKind;
 import com.codeagent.mcp.dependency.DependencyHistory;
 import com.codeagent.mcp.dependency.DependencyService;
 import com.codeagent.mcp.dependency.OsvClient;

@@ -1,7 +1,12 @@
 package com.codeagent.mcp.codegraph;
 
-import com.codeagent.mcp.codegraph.CodeGraphDraft.EdgeDraft;
-import com.codeagent.mcp.codegraph.CodeGraphDraft.NodeDraft;
+import com.codeagent.core.CodeGraphEngine;
+import com.codeagent.core.model.CodeEdgeKind;
+import com.codeagent.core.model.CodeGraphDraft;
+import com.codeagent.core.model.CodeGraphDraft.EdgeDraft;
+import com.codeagent.core.model.CodeGraphDraft.NodeDraft;
+import com.codeagent.core.model.CodeNodeKind;
+import com.codeagent.core.rules.SinkRules;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -76,8 +81,8 @@ public class CodeGraph {
 
     /** 저장소를 파싱해서 그래프를 만든다 */
     public static CodeGraph build(java.nio.file.Path repoRoot) {
-        JavaProject project = JavaProject.load(repoRoot);
-        return new CodeGraph(new CodeGraphBuilder(project).build(), project.parseErrors());
+        CodeGraphEngine.Result analyzed = CodeGraphEngine.analyze(repoRoot);
+        return new CodeGraph(analyzed.draft(), analyzed.parseErrors());
     }
 
     public Stats stats() {
