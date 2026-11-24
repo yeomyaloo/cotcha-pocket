@@ -24,7 +24,7 @@ import java.util.Set;
 
 /**
  * 메모리에 올린 코드 그래프. 노드에 1부터 번호를 붙여 도구 입출력에서 짧게 가리킬 수 있게 한다.
- * (be-code-agent 는 같은 그래프를 PostgreSQL 에 저장하고 재귀 CTE 로 탐색한다)
+ * (cotcha-net 는 같은 그래프를 PostgreSQL 에 저장하고 재귀 CTE 로 탐색한다)
  */
 public class CodeGraph {
 

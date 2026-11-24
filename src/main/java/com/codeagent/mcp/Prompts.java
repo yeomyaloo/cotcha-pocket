@@ -2,7 +2,7 @@ package com.codeagent.mcp;
 
 /**
  * MCP 프롬프트와 서버 안내문. 채팅의 Claude 가 Worker(조사)와 Verifier(검증) 역할을 차례로 맡도록 이끈다.
- * (be-code-agent 에서는 백엔드가 Worker·Verifier 에이전트를 따로 돌리지만, 여기서는 채팅의 Claude 가 둘 다 한다)
+ * (cotcha-net 에서는 백엔드가 Worker·Verifier 에이전트를 따로 돌리지만, 여기서는 채팅의 Claude 가 둘 다 한다)
  */
 final class Prompts {
 

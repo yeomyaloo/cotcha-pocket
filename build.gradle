@@ -20,7 +20,7 @@ repositories {
 	exclusiveContent {
 		forRepository {
 			maven {
-				url = uri('https://maven.pkg.github.com/yeomyaloo/core-code-agent')
+				url = uri('https://maven.pkg.github.com/yeomyaloo/cotcha-trail')
 				credentials {
 					username = providers.gradleProperty('gpr.user').orElse(providers.environmentVariable('GITHUB_ACTOR')).orNull
 					password = providers.gradleProperty('gpr.key').orElse(providers.environmentVariable('GITHUB_TOKEN')).orNull
@@ -49,7 +49,7 @@ dependencies {
 
 application {
 	mainClass = 'com.codeagent.mcp.McpCodeAgent'
-	applicationName = 'mcp-code-agent'
+	applicationName = 'cotcha-pocket'
 	applicationDefaultJvmArgs = ['-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8']
 }
 

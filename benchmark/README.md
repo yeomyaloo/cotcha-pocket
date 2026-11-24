@@ -1,6 +1,6 @@
 # Benchmark
 
-An evaluation harness that measures how well an audit with this plugin finds vulnerabilities, and whether repeated audits of the same code reach the same conclusions. The same benchmark lives in be-code-agent, where `run.py` drives the backend; here you run the audit in Claude Code and score the exported SARIF.
+An evaluation harness that measures how well an audit with this plugin finds vulnerabilities, and whether repeated audits of the same code reach the same conclusions. The same benchmark lives in cotcha-net, where `run.py` drives the backend; here you run the audit in Claude Code and score the exported SARIF.
 
 | File | What it is |
 |---|---|
@@ -28,7 +28,7 @@ Rules: a finding points at an item when one of its locations is inside the item'
 
 # 벤치마크
 
-이 플러그인으로 한 보안 분석이 취약점을 얼마나 잘 찾는지, 같은 코드를 다시 분석해도 같은 결론을 내는지 재는 평가 하네스다. be-code-agent 에도 같은 벤치마크가 있고 거기서는 `run.py` 가 백엔드를 돌린다. 여기서는 Claude Code 에서 분석하고 내보낸 SARIF 를 채점한다.
+이 플러그인으로 한 보안 분석이 취약점을 얼마나 잘 찾는지, 같은 코드를 다시 분석해도 같은 결론을 내는지 재는 평가 하네스다. cotcha-net 에도 같은 벤치마크가 있고 거기서는 `run.py` 가 백엔드를 돌린다. 여기서는 Claude Code 에서 분석하고 내보낸 SARIF 를 채점한다.
 
 | 파일 | 내용 |
 |---|---|

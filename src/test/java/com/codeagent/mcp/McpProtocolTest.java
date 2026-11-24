@@ -41,7 +41,7 @@ class McpProtocolTest {
                 .initializationTimeout(Duration.ofSeconds(60))
                 .build()) {
             var init = client.initialize();
-            assertThat(init.serverInfo().name()).isEqualTo("mcp-code-agent");
+            assertThat(init.serverInfo().name()).isEqualTo("cotcha-pocket");
             assertThat(init.instructions()).contains("load_repository");
 
             assertThat(client.listTools().tools()).extracting(Tool::name)
