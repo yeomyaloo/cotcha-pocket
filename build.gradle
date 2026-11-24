@@ -35,7 +35,7 @@ repositories {
 
 dependencies {
 	implementation 'io.modelcontextprotocol.sdk:mcp:2.0.1'
-	implementation 'com.codeagent:core-code-agent:0.2.0'
+	implementation 'com.codeagent:core-code-agent:0.3.0'
 	implementation 'org.eclipse.jgit:org.eclipse.jgit:7.8.0.202609011348-r'
 	implementation 'org.slf4j:slf4j-api:2.0.17'
 	// MCP stdio 는 stdout 으로 통신하므로 로그는 stderr 로만 (slf4j-simple 기본값)
