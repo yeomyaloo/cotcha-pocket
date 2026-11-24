@@ -46,6 +46,31 @@ class CodeAgentToolsTest {
     }
 
     @Test
+    void 파이썬_FastAPI_저장소도_같은_형식으로_분석한다() {
+        Path app = Path.of("src/test/resources/fixtures/fastapi-app").toAbsolutePath();
+        String loaded = call("load_repository", Map.of("path", app.toString()));
+        assertThat(loaded).contains("언어: python", "진입점 12", "위험 지점 12");
+
+        String entries = call("list_entry_points", Map.of("repo", "fastapi-app"));
+        assertThat(entries).contains("POST /api/scan/nmap · scan.run_nmap · app/routers/scan.py:18 · Depends: deps.get_current_user");
+        assertThat(entries).contains("GET /about · files.about · app/routers/files.py:22 · Depends 없음");
+
+        String paths = call("list_sink_paths", Map.of("repo", "fastapi-app"));
+        assertThat(paths).contains("POST /api/scan/nmap  →  [COMMAND CWE-78] asyncio.create_subprocess_exec");
+        assertThat(paths).containsPattern("scan\\.run_nmap\\(#\\d+\\) › scanner\\.run_nmap\\(#\\d+\\)");
+
+        String sinks = call("list_sinks", Map.of("repo", "fastapi-app", "category", "ssrf"));
+        assertThat(sinks).contains("[SSRF CWE-918] httpx.Client.get · scan.fetch · app/routers/scan.py:");
+
+        String callers = call("get_callers", Map.of("repo", "fastapi-app", "node", "scanner.run_nmap"));
+        assertThat(callers).contains("app.routers.scan.run_nmap");
+
+        String grep = call("grep_code", Map.of("repo", "fastapi-app", "pattern", "shell=True"));
+        // 저장소 언어가 python 이면 기본 대상은 **.py (Java 기본값 **.java 였으면 아무것도 안 나옴)
+        assertThat(grep).contains("app/routers/scan.py:");
+    }
+
+    @Test
     void 인터페이스를_거쳐_SQL_위험_지점까지_가는_경로를_찾는다() {
         String result = call("list_sink_paths", Map.of("repo", "vulnerable-app"));
 

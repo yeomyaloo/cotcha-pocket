@@ -73,7 +73,8 @@ public class CodeAgentTools {
 
     ToolDef loadRepository() {
         return new ToolDef("load_repository", "저장소 불러오기",
-                "분석할 Java/Spring 저장소를 불러와 코드 그래프(진입점, 위험 지점, 호출 관계)를 만든다. "
+                "분석할 저장소를 불러와 코드 그래프(진입점, 위험 지점, 호출 관계)를 만든다. "
+                        + "언어는 파일 확장자로 판별한다: Java/Spring, Python/FastAPI, 프론트엔드 JS/TS/Vue/HTML. "
                         + "path(이 컴퓨터의 폴더) 또는 git_url(공개 https 저장소, 얕은 클론) 중 하나를 준다. "
                         + "같은 저장소를 다시 부르면 다시 파싱(Git 이면 최신 커밋으로 다시 클론)한다. 분석의 첫 단계.",
                 schema(props(
@@ -97,6 +98,7 @@ public class CodeAgentTools {
             StringBuilder sb = new StringBuilder();
             sb.append("저장소 id: ").append(repo.id()).append('\n')
                     .append("대상: ").append(repo.origin()).append('\n')
+                    .append("언어: ").append(s.languages().isEmpty() ? "분석할 소스 없음" : String.join(", ", s.languages())).append('\n')
                     .append("파일 ").append(s.files()).append(" · 클래스 ").append(s.classes())
                     .append(" · 메서드 ").append(s.methods()).append(" · 진입점 ").append(s.entryPoints())
                     .append(" · 위험 지점 ").append(s.sinks()).append('\n')
@@ -157,7 +159,7 @@ public class CodeAgentTools {
                         .append(sinkLabel(p.sink())).append('\n');
                 sb.append("   경로: ").append(p.path().stream()
                         .filter(n -> n.kind() == CodeNodeKind.METHOD)
-                        .map(n -> shortName(n.qualifiedName()) + "(#" + n.id() + ")")
+                        .map(n -> shortName(n, n.qualifiedName()) + "(#" + n.id() + ")")
                         .collect(Collectors.joining(" › "))).append('\n');
                 sb.append("   위험 지점 위치: ").append(location(p.sink())).append(" · 코드: ").append(p.sink().prop("snippet")).append('\n');
             }
@@ -166,11 +168,14 @@ public class CodeAgentTools {
     }
 
     ToolDef listEntryPoints() {
-        return new ToolDef("list_entry_points", "진입점 목록", "Spring MVC 컨트롤러에서 찾은 HTTP 진입점 목록.",
+        return new ToolDef("list_entry_points", "진입점 목록",
+                "HTTP 진입점 목록: Spring MVC 컨트롤러, FastAPI 라우트(@app.get, @router.post 등, prefix 포함). "
+                        + "FastAPI 는 Depends(...)로 거는 의존 함수(인증 확인 등)를 같이 보여준다. Depends 가 없으면 인증 없이 열린 엔드포인트일 수 있다.",
                 schema(props("repo", REPO), List.of("repo")), true, false, args -> {
             List<Node> entries = repo(args).graph().nodes(CodeNodeKind.ENTRY_POINT);
             return entries.isEmpty() ? "진입점 없음" : entries.stream()
-                    .map(n -> "#" + n.id() + " " + entryLabel(n) + " · " + shortName(n.prop("handler")) + " · " + location(n))
+                    .map(n -> "#" + n.id() + " " + entryLabel(n) + " · " + shortName(n, n.prop("handler")) + " · " + location(n)
+                            + dependencies(n))
                     .collect(Collectors.joining("\n"));
         });
     }
@@ -180,6 +185,8 @@ public class CodeAgentTools {
                 "위험한 API 를 호출하는 위치 목록. 분류: SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, "
                         + "EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO(약한 해시·암호), WEAK_RANDOM(예측 가능한 난수), "
                         + "IDOR(Spring Data 저장소의 findById·deleteById 등 id 접근, 소유자 확인 누락 후보). "
+                        + "Python 도 같은 분류를 쓴다(예: subprocess·os.system → COMMAND, requests·httpx → SSRF, open·FileResponse → PATH, "
+                        + "문자열을 조립해 execute 에 넘김·sqlalchemy.text → SQL, pickle·yaml.load → DESERIALIZATION). "
                         + "프론트엔드(JS/TS/Vue/HTML) 코드의 위험 지점([프론트엔드]: XSS, CODE_INJECTION, OPEN_REDIRECT, TOKEN_STORAGE, "
                         + "POSTMESSAGE, HARDCODED_SECRET)은 HTTP 진입점 경로가 없으므로 list_sink_paths 에 나오지 않는다. "
                         + "진입점에서 닿지 않는 위험 지점도 포함한다.",
@@ -191,7 +198,7 @@ public class CodeAgentTools {
                     .toList();
             return sinks.isEmpty() ? "위험 지점 없음" : sinks.stream()
                     .map(n -> "#" + n.id() + " " + ("true".equals(n.prop("frontend")) ? "[프론트엔드] " : "") + sinkLabel(n)
-                            + " · " + shortName(n.prop("method")) + " · " + location(n)
+                            + " · " + shortName(n, n.prop("method")) + " · " + location(n)
                             + "\n    " + n.prop("snippet"))
                     .collect(Collectors.joining("\n"));
         });
@@ -278,15 +285,18 @@ public class CodeAgentTools {
 
     ToolDef grepCode() {
         return new ToolDef("grep_code", "코드 검색",
-                "정규식(Java 문법)과 일치하는 줄을 '경로:줄: 내용' 으로 찾는다. 최대 80개. 입력 검증(@Valid), "
-                        + "보안 설정(SecurityFilterChain), 필터·인터셉터 같은 방어 장치를 찾는 데 쓴다.",
+                "정규식(Java 정규식 문법)과 일치하는 줄을 '경로:줄: 내용' 으로 찾는다. 최대 80개. 입력 검증(@Valid, Pydantic), "
+                        + "보안 설정(SecurityFilterChain, Depends), 필터·인터셉터·미들웨어 같은 방어 장치를 찾는 데 쓴다.",
                 schema(props(
                         "repo", REPO,
-                        "pattern", string("Java 정규식 (예: @Valid|@Pattern|SecurityFilterChain)"),
-                        "file_glob", string("대상 파일 glob, 저장소 루트 기준 (기본 **.java, 예: **.yml, src/main/resources/**)")),
+                        "pattern", string("정규식 (예: @Valid|@Pattern|SecurityFilterChain, Depends\\(|shell=True)"),
+                        "file_glob", string("대상 파일 glob, 저장소 루트 기준 (기본: 저장소 언어의 소스 **.java / **.py, 예: **.yml, src/main/resources/**)")),
                         List.of("repo", "pattern")),
-                true, false, args -> RepoFiles.grep(repo(args).root(), args.string("pattern"),
-                args.optionalString("file_glob").orElse("**.java")));
+                true, false, args -> {
+            LoadedRepository repo = repo(args);
+            return RepoFiles.grep(repo.root(), args.string("pattern"),
+                    args.optionalString("file_glob").orElse(defaultGlob(repo.graph().stats().languages())));
+        });
     }
 
     // ---- 발견 ----
@@ -436,7 +446,7 @@ public class CodeAgentTools {
         if (found.isEmpty()) {
             throw new ToolException("찾지 못함: " + ref + ". find_code_nodes 로 이름을 확인할 것");
         }
-        List<Node> exact = found.stream().filter(n -> shortName(n.qualifiedName()).toLowerCase(Locale.ROOT)
+        List<Node> exact = found.stream().filter(n -> shortName(n, n.qualifiedName()).toLowerCase(Locale.ROOT)
                 .startsWith(r.toLowerCase(Locale.ROOT)) || n.qualifiedName().equalsIgnoreCase(r)).toList();
         List<Node> candidates = exact.isEmpty() ? found : exact;
         // 메서드 이름은 그 안의 위험 지점 이름에도 들어가므로, 메서드가 하나뿐이면 메서드를 고른다
@@ -474,6 +484,32 @@ public class CodeAgentTools {
             return "";
         }
         return n.line() == null ? n.filePath() : n.filePath() + ":" + n.line();
+    }
+
+    /** grep_code 의 기본 대상: 저장소에서 찾은 백엔드 언어의 소스 */
+    static String defaultGlob(java.util.Set<String> languages) {
+        boolean java = languages.contains("java") || !languages.contains("python");
+        boolean python = languages.contains("python");
+        return java && python ? "**.{java,py}" : python ? "**.py" : "**.java";
+    }
+
+    /** FastAPI 진입점의 Depends(...) 의존 함수 */
+    static String dependencies(Node n) {
+        Object deps = n.props().get("dependencies");
+        if (!(deps instanceof List<?> list)) {
+            return "";
+        }
+        return list.isEmpty() ? " · Depends 없음"
+                : " · Depends: " + list.stream().map(d -> shortName(n, String.valueOf(d))).collect(Collectors.joining(", "));
+    }
+
+    /** Python 이름은 마지막 두 부분 (app.routers.scan.run_nmap → scan.run_nmap, app.repo.UserRepo.delete → UserRepo.delete) */
+    static String shortName(Node n, String qualifiedName) {
+        if (qualifiedName == null || !"python".equals(n.prop("language"))) {
+            return shortName(qualifiedName);
+        }
+        String[] parts = qualifiedName.split("\\.");
+        return parts.length <= 2 ? qualifiedName : parts[parts.length - 2] + "." + parts[parts.length - 1];
     }
 
     /** com.example.UserServiceImpl#search(String) → UserServiceImpl#search(String) */

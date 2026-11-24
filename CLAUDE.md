@@ -1,6 +1,6 @@
 # mcp-code-agent
 
-채팅 앱(Claude Code, Claude Desktop)에 연결하는 stdio MCP 서버. Claude가 판단하고, 이 서버는 Java/Spring 코드 그래프·파일 읽기·발견 기록·보고서를 맡는다. 코드 그래프 엔진은 공용 라이브러리 core-code-agent(`../core-code-agent`, 패키지 `com.codeagent.core`)를 be-code-agent 와 같이 쓴다.
+채팅 앱(Claude Code, Claude Desktop)에 연결하는 stdio MCP 서버. Claude가 판단하고, 이 서버는 코드 그래프(Java/Spring, Python/FastAPI, 프론트엔드 JS/TS)·파일 읽기·발견 기록·보고서를 맡는다. 코드 그래프 엔진은 공용 라이브러리 core-code-agent(`../core-code-agent`, 패키지 `com.codeagent.core`)를 be-code-agent 와 같이 쓴다.
 
 ## 명령
 
