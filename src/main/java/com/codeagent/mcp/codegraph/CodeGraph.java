@@ -48,7 +48,7 @@ public class CodeGraph {
     }
 
     public record Stats(long files, long classes, long methods, long entryPoints, long sinks, long callEdges,
-                        long overrideEdges, int unresolvedCalls, List<String> parseErrors) {
+                        long overrideEdges, int unresolvedCalls, List<String> parseErrors, Set<String> languages) {
     }
 
     private final List<Node> nodes = new ArrayList<>();
@@ -56,7 +56,7 @@ public class CodeGraph {
     private final Map<Integer, List<Edge>> incoming = new HashMap<>();
     private final Stats stats;
 
-    private CodeGraph(CodeGraphDraft draft, List<String> parseErrors) {
+    private CodeGraph(CodeGraphDraft draft, List<String> parseErrors, Set<String> languages) {
         Map<String, Integer> ids = new HashMap<>();
         for (NodeDraft d : draft.nodes()) {
             Node node = new Node(nodes.size() + 1, d.kind(), d.qualifiedName(), d.filePath(), d.startLine(), d.props());
@@ -76,13 +76,13 @@ public class CodeGraph {
         this.stats = new Stats(draft.count(CodeNodeKind.FILE), draft.count(CodeNodeKind.CLASS),
                 draft.count(CodeNodeKind.METHOD), draft.count(CodeNodeKind.ENTRY_POINT), draft.count(CodeNodeKind.SINK),
                 draft.count(CodeEdgeKind.CALLS), draft.count(CodeEdgeKind.OVERRIDDEN_BY), draft.unresolvedCalls(),
-                List.copyOf(parseErrors));
+                List.copyOf(parseErrors), languages);
     }
 
     /** 저장소를 파싱해서 그래프를 만든다 */
     public static CodeGraph build(java.nio.file.Path repoRoot) {
         CodeGraphEngine.Result analyzed = CodeGraphEngine.analyze(repoRoot);
-        return new CodeGraph(analyzed.draft(), analyzed.parseErrors());
+        return new CodeGraph(analyzed.draft(), analyzed.parseErrors(), analyzed.languages());
     }
 
     public Stats stats() {

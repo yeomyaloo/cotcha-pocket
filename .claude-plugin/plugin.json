@@ -1,8 +1,8 @@
 {
   "name": "code-agent",
   "displayName": "Code Agent: AI code security audit",
-  "version": "0.8.1",
-  "description": "Audit Java/Spring source code for security vulnerabilities in chat. Claude plans the audit, investigates entry point to sink paths with a code graph (JavaParser), records findings, re-verifies each one adversarially, and exports Markdown/SARIF reports. Requires Java 17+.",
+  "version": "0.9.0",
+  "description": "Audit Java/Spring and Python/FastAPI source code for security vulnerabilities in chat. Claude plans the audit, investigates entry point to sink paths with a code graph, records findings, re-verifies each one adversarially, and exports Markdown/SARIF reports. Requires Java 17+.",
   "author": {
     "name": "hwiju yeom",
     "url": "https://github.com/yeomyaloo"
@@ -16,6 +16,8 @@
     "code-review",
     "java",
     "spring",
+    "python",
+    "fastapi",
     "mcp",
     "cwe",
     "sarif"
