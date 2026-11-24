@@ -43,8 +43,12 @@ jobs:
       - name: Java 17 로 MCP 서버가 뜨는지 확인
         run: |
           java -version
-          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
-            | timeout 30 java -cp "server/lib/*" com.codeagent.mcp.McpCodeAgent > out.txt 2> err.txt || true
+          # 요청을 보낸 뒤 응답이 올 때까지(최대 20초) 표준 입력을 열어 둔다.
+          # 바로 닫으면 서버가 응답을 쓰기 전에 끝나는 경우가 있다
+          {
+            printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}'
+            for i in $(seq 1 20); do grep -q '"serverInfo"' out.txt 2>/dev/null && break; sleep 1; done
+          } | timeout 30 java -cp "server/lib/*" com.codeagent.mcp.McpCodeAgent > out.txt 2> err.txt || true
           cat out.txt
           grep -q '"serverInfo"' out.txt || (cat err.txt; exit 1)
 
