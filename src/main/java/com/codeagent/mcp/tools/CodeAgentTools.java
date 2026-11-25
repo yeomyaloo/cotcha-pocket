@@ -488,9 +488,17 @@ public class CodeAgentTools {
 
     /** grep_code 의 기본 대상: 저장소에서 찾은 백엔드 언어의 소스 */
     static String defaultGlob(java.util.Set<String> languages) {
-        boolean java = languages.contains("java") || !languages.contains("python");
-        boolean python = languages.contains("python");
-        return java && python ? "**.{java,py}" : python ? "**.py" : "**.java";
+        java.util.List<String> extensions = new java.util.ArrayList<>();
+        if (languages.contains("java") || !(languages.contains("python") || languages.contains("kotlin"))) {
+            extensions.add("java");
+        }
+        if (languages.contains("kotlin")) {
+            extensions.add("kt");
+        }
+        if (languages.contains("python")) {
+            extensions.add("py");
+        }
+        return extensions.size() == 1 ? "**." + extensions.get(0) : "**.{" + String.join(",", extensions) + "}";
     }
 
     /** FastAPI 진입점의 Depends(...) 의존 함수 */

@@ -149,7 +149,7 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 
 | Tool | What it does | Read-only |
 |---|---|---|
-| `load_repository` | Load a folder path or a public Git https URL (shallow clone) and build the code graph. Languages are detected by file extension (Java/Spring, Python/FastAPI, frontend JS/TS) | |
+| `load_repository` | Load a folder path or a public Git https URL (shallow clone) and build the code graph. Languages are detected by file extension (Java/Spring, Kotlin, Python/FastAPI, frontend JS/TS) | |
 | `list_repositories` | Loaded repositories | ✅ |
 | `list_sink_paths` | Entry point → sink call paths (shortest per pair; riskiest categories first, then shortest) | ✅ |
 | `list_entry_points` | HTTP entry points: Spring MVC, FastAPI routes (with router prefixes and `Depends(...)` dependencies) | ✅ |
@@ -217,7 +217,7 @@ src/main/java/com/codeagent/mcp/
 
 ## Limitations
 
-- Analyzes Java / Spring MVC and Python / FastAPI backends, plus pattern-based checks on frontend JS/TS/Vue/HTML (no JS parser or call graph, so frontend sinks are candidates found line by line).
+- Analyzes Java / Spring MVC and Python / FastAPI backends (Kotlin too: calls between Java and Kotlin are linked, but Kotlin Spring annotations are not entry points yet), plus pattern-based checks on frontend JS/TS/Vue/HTML (no JS parser or call graph, so frontend sinks are candidates found line by line).
 - Python has no type inference: calls on parameters of unknown type are not followed (SQL is still flagged when a built query string reaches an `execute`-like method). Flask/Django routes are not detected yet. Python parsing uses native tree-sitter libraries, which are not available on Windows on ARM (Python files are skipped there).
 - `check_dependencies` does not run the build, so transitive dependencies are checked only when a `gradle.lockfile` exists, and versions set only by a BOM are reported as unknown.
 - The code graph is static analysis and can be wrong, which is why Claude must read the actual code before judging.
@@ -373,7 +373,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 
 | 도구 | 하는 일 | 읽기 전용 |
 |---|---|---|
-| `load_repository` | 폴더 경로 또는 공개 Git https 주소(얕은 클론)로 저장소를 불러와 코드 그래프를 만든다. 언어는 확장자로 판별한다(Java/Spring, Python/FastAPI, 프론트엔드 JS/TS) | |
+| `load_repository` | 폴더 경로 또는 공개 Git https 주소(얕은 클론)로 저장소를 불러와 코드 그래프를 만든다. 언어는 확장자로 판별한다(Java/Spring, Kotlin, Python/FastAPI, 프론트엔드 JS/TS) | |
 | `list_repositories` | 불러온 저장소 목록 | ✅ |
 | `list_sink_paths` | 진입점 → 위험 지점 호출 경로 (쌍마다 가장 짧은 경로, 위험한 분류부터, 같은 분류면 짧은 순) | ✅ |
 | `list_entry_points` | HTTP 진입점: Spring MVC, FastAPI 라우트(라우터 prefix, `Depends(...)` 의존 함수 포함) | ✅ |
@@ -441,7 +441,7 @@ src/main/java/com/codeagent/mcp/
 
 ## 한계
 
-- Java/Spring MVC 와 Python/FastAPI 백엔드를 분석하고, 프론트엔드 JS/TS/Vue/HTML은 패턴으로만 점검한다(JS 파서·호출 그래프가 없어서 줄 단위로 찾은 후보다).
+- Java/Spring MVC 와 Python/FastAPI 백엔드를 분석하고(Kotlin 도 본다. Java ↔ Kotlin 호출은 잇지만 Kotlin 의 Spring 애너테이션은 아직 진입점으로 찾지 않는다), 프론트엔드 JS/TS/Vue/HTML은 패턴으로만 점검한다(JS 파서·호출 그래프가 없어서 줄 단위로 찾은 후보다).
 - Python 은 타입 추론을 하지 않아서 타입을 모르는 파라미터의 메서드 호출은 따라가지 않는다(조립한 쿼리 문자열이 `execute` 류에 닿으면 SQL 로는 잡는다). Flask/Django 라우트는 아직 찾지 않는다. Python 파싱은 tree-sitter 네이티브 라이브러리를 쓰는데 Windows ARM 용이 없어서 그 환경에서는 파이썬 파일을 건너뛴다.
 - `check_dependencies`는 빌드를 실행하지 않으므로 전이 의존성은 `gradle.lockfile`이 있을 때만 검사되고, BOM으로만 버전이 정해진 라이브러리는 버전 모름으로 나온다.
 - 코드 그래프는 정적 분석이라 틀릴 수 있다. 그래서 판단은 반드시 Claude가 실제 코드를 읽고 내리게 되어 있다.
