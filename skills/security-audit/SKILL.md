@@ -43,6 +43,12 @@ For each plan item:
   In Python: Pydantic models/validators and `Field(pattern=...)`, `ipaddress`/regex allow-lists, `shell=False` with an argument list, `shlex.quote`, `execute(sql, params)` / SQLAlchemy bound parameters, `os.path.realpath` + base-dir check, auth dependencies (`Depends(get_current_user)`), Flask/Django `login_required`, DRF `permission_classes`, `LoginRequiredMixin`, middleware.
 - Input that is only constants or server-side values is not exploitable.
 - Call `record_finding` **only** when you confirmed in code that external input reaches the sink unblocked (or that an owner/role check is missing on a reachable endpoint). Include file:line evidence and a concrete attack request.
+- **One finding per weakness** (a weakness = one location + one CWE). Do not fold one weakness into another, even when they are related; mention the related finding id in the description instead. In particular:
+  - A missing authentication or ownership check on an endpoint (CWE-306/862/639, at the handler or the id lookup) is separate from an injection in the same handler (SQL, command, path).
+  - A hardcoded secret or key (CWE-798/321, where the value is) is separate from the weak algorithm that uses it (CWE-327/328).
+  - A frontend sink (XSS, token in `localStorage`, `postMessage` without an origin check) is separate from the backend bug that feeds it.
+  - The same weakness reported twice (same location and CWE) is a duplicate: record it once.
+- **Code with no caller:** weaknesses in the code itself (a hardcoded secret, password hashing with MD5/SHA-1, a trust-all TrustManager or `verify=False` client) are still findings when the code ships, because they can be read from the source or build or called later. Record them with `severity` low unless the secret alone is damaging, and say "no caller found" in the description. Injection-type sinks (SQL, command, path, SSRF, deserialization) need external input: if no reachable endpoint or job feeds them, they are not findings.
 
 If you can spawn subagents (Claude Code `Agent` tool), give each plan item to its own subagent in parallel and pass it the repo id, the item, and the rules above; have it report its verdict and what it recorded.
 
@@ -54,7 +60,7 @@ After investigation, switch sides. For each finding (`list_findings` with `detai
 - **Defenses** — does any control above block the attack?
 - **Impact** — what can an attacker actually do? Is the severity inflated?
 
-Then `submit_verdict`: `confirmed`, `rejected` (blocked or not attacker-controlled — a false positive), or `uncertain` (only when the deciding code is outside the repository). Adjust `severity` if needed.
+Then `submit_verdict`: `confirmed`, `rejected` (blocked or not attacker-controlled — a false positive), or `uncertain` (only when the deciding code is outside the repository). Adjust `severity` if needed. Do not reject a finding because another finding covers the same endpoint: a different CWE at a different location is a separate weakness. For a weakness in the code itself (secret, weak hashing, trust-all TLS), having no caller lowers the severity; it is not a reason to reject.
 If subagents are available, use a different subagent from the one that investigated, so the verdict is independent.
 
 ## 4. Report
