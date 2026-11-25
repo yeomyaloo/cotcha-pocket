@@ -24,7 +24,7 @@
 
 <a id="english"></a>
 
-Connect it to Claude Code (or Claude Desktop) and say *"audit this repository for security issues"*. Claude uses this server's tools to follow **entry point → dangerous API (sink)** paths through Java/Spring or Python/FastAPI code, records vulnerabilities, re-verifies each one from the opposite side, and writes a report.
+Connect it to Claude Code (or Claude Desktop) and say *"audit this repository for security issues"*. Claude uses this server's tools to follow **entry point → dangerous API (sink)** paths through Java/Spring, Kotlin or Python (FastAPI, Flask, Django) code, records vulnerabilities, re-verifies each one from the opposite side, and writes a report.
 
 - **Runs on your Claude Code login.** A Claude subscription (Pro, Max, Team, …) or an API key, whichever Claude Code uses. There is no separate API key to configure.
 - **No database, no server to host.** Only Java is required. The code graph lives in memory and findings are saved as JSON files.
@@ -149,7 +149,7 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 
 | Tool | What it does | Read-only |
 |---|---|---|
-| `load_repository` | Load a folder path or a public Git https URL (shallow clone) and build the code graph. Languages are detected by file extension (Java/Spring, Kotlin, Python/FastAPI, frontend JS/TS) | |
+| `load_repository` | Load a folder path or a public Git https URL (shallow clone) and build the code graph. Languages are detected by file extension (Java/Spring, Kotlin, Python FastAPI/Flask/Django, frontend JS/TS) | |
 | `list_repositories` | Loaded repositories | ✅ |
 | `list_sink_paths` | Entry point → sink call paths (shortest per pair; riskiest categories first, then shortest) | ✅ |
 | `list_entry_points` | HTTP entry points: Spring MVC, FastAPI routes (with router prefixes and `Depends(...)` dependencies) | ✅ |
@@ -218,7 +218,7 @@ src/main/java/com/codeagent/mcp/
 ## Limitations
 
 - Analyzes Java / Spring MVC and Python / FastAPI backends (Kotlin too: Kotlin Spring controllers and WebFlux functional routers in both languages are entry points, and calls between Java and Kotlin are linked), plus pattern-based checks on frontend JS/TS/Vue/HTML (no JS parser or call graph, so frontend sinks are candidates found line by line).
-- Python has no type inference: calls on parameters of unknown type are not followed (SQL is still flagged when a built query string reaches an `execute`-like method). Flask/Django routes are not detected yet. Python parsing uses native tree-sitter libraries, which are not available on Windows on ARM (Python files are skipped there).
+- Python has no type inference: calls on parameters of unknown type are not followed (SQL is still flagged when a built query string reaches an `execute`-like method). Flask and Django routes are detected too, with auth hints (`login_required`, `permission_classes`, …) per entry point. Python parsing uses native tree-sitter libraries, which are not available on Windows on ARM (Python files are skipped there).
 - `check_dependencies` does not run the build, so transitive dependencies are checked only when a `gradle.lockfile` exists, and versions set only by a BOM are reported as unknown.
 - The code graph is static analysis and can be wrong, which is why Claude must read the actual code before judging.
 - The analyzed code is sent to Anthropic through your chat app. Do not analyze code that must not leave your machine.
@@ -248,7 +248,7 @@ src/main/java/com/codeagent/mcp/
 
 **채팅에서 쓰는 AI 코드 보안 분석 에이전트 (Claude Code 플러그인 + MCP 서버)**
 
-Claude Code나 Claude Desktop에 연결하고 "이 저장소 보안 분석해줘"라고 하면 된다. Claude가 이 서버의 도구로 Java/Spring·Python/FastAPI 코드의 **진입점 → 위험 지점** 경로를 따라가며 취약점을 찾고, 입장을 바꿔 다시 검증하고, 보고서를 만든다.
+Claude Code나 Claude Desktop에 연결하고 "이 저장소 보안 분석해줘"라고 하면 된다. Claude가 이 서버의 도구로 Java/Spring·Kotlin·Python(FastAPI·Flask·Django) 코드의 **진입점 → 위험 지점** 경로를 따라가며 취약점을 찾고, 입장을 바꿔 다시 검증하고, 보고서를 만든다.
 
 - **Claude Code에 로그인한 그대로 돈다.** Claude 구독(Pro, Max, Team 등)이든 API 키든 Claude Code가 쓰는 방식 그대로이고, 따로 설정할 API 키가 없다.
 - **DB도 서버도 필요 없다.** Java만 있으면 된다. 코드 그래프는 메모리에, 발견은 JSON 파일에 둔다.
@@ -373,7 +373,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 
 | 도구 | 하는 일 | 읽기 전용 |
 |---|---|---|
-| `load_repository` | 폴더 경로 또는 공개 Git https 주소(얕은 클론)로 저장소를 불러와 코드 그래프를 만든다. 언어는 확장자로 판별한다(Java/Spring, Kotlin, Python/FastAPI, 프론트엔드 JS/TS) | |
+| `load_repository` | 폴더 경로 또는 공개 Git https 주소(얕은 클론)로 저장소를 불러와 코드 그래프를 만든다. 언어는 확장자로 판별한다(Java/Spring, Kotlin, Python FastAPI·Flask·Django, 프론트엔드 JS/TS) | |
 | `list_repositories` | 불러온 저장소 목록 | ✅ |
 | `list_sink_paths` | 진입점 → 위험 지점 호출 경로 (쌍마다 가장 짧은 경로, 위험한 분류부터, 같은 분류면 짧은 순) | ✅ |
 | `list_entry_points` | HTTP 진입점: Spring MVC, FastAPI 라우트(라우터 prefix, `Depends(...)` 의존 함수 포함) | ✅ |
@@ -442,7 +442,7 @@ src/main/java/com/codeagent/mcp/
 ## 한계
 
 - Java/Spring MVC 와 Python/FastAPI 백엔드를 분석하고(Kotlin 도 본다. Kotlin 으로 쓴 Spring 컨트롤러와 두 언어의 WebFlux 함수형 라우터도 진입점이고, Java ↔ Kotlin 호출을 잇는다), 프론트엔드 JS/TS/Vue/HTML은 패턴으로만 점검한다(JS 파서·호출 그래프가 없어서 줄 단위로 찾은 후보다).
-- Python 은 타입 추론을 하지 않아서 타입을 모르는 파라미터의 메서드 호출은 따라가지 않는다(조립한 쿼리 문자열이 `execute` 류에 닿으면 SQL 로는 잡는다). Flask/Django 라우트는 아직 찾지 않는다. Python 파싱은 tree-sitter 네이티브 라이브러리를 쓰는데 Windows ARM 용이 없어서 그 환경에서는 파이썬 파일을 건너뛴다.
+- Python 은 타입 추론을 하지 않아서 타입을 모르는 파라미터의 메서드 호출은 따라가지 않는다(조립한 쿼리 문자열이 `execute` 류에 닿으면 SQL 로는 잡는다). Flask·Django 라우트도 찾고, 진입점마다 인증 단서(`login_required`, `permission_classes` 등)를 보여준다. Python 파싱은 tree-sitter 네이티브 라이브러리를 쓰는데 Windows ARM 용이 없어서 그 환경에서는 파이썬 파일을 건너뛴다.
 - `check_dependencies`는 빌드를 실행하지 않으므로 전이 의존성은 `gradle.lockfile`이 있을 때만 검사되고, BOM으로만 버전이 정해진 라이브러리는 버전 모름으로 나온다.
 - 코드 그래프는 정적 분석이라 틀릴 수 있다. 그래서 판단은 반드시 Claude가 실제 코드를 읽고 내리게 되어 있다.
 - 분석하는 코드는 채팅 앱을 통해 Anthropic으로 전송된다. 외부로 보내면 안 되는 코드는 분석하지 말 것.

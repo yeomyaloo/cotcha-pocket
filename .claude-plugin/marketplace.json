@@ -4,12 +4,12 @@
     "name": "hwiju yeom",
     "url": "https://github.com/yeomyaloo"
   },
-  "description": "Cotcha: AI code security audit agent for Java/Spring and Python/FastAPI (MCP server + skill)",
+  "description": "Cotcha: AI code security audit agent for Java/Spring, Kotlin and Python (FastAPI, Flask, Django) (MCP server + skill)",
   "plugins": [
     {
       "name": "cotcha",
       "source": "./",
-      "description": "Audit Java/Spring and Python/FastAPI source code for security vulnerabilities in chat (code graph, findings, verification, SARIF reports). Requires Java 17+."
+      "description": "Audit Java/Spring, Kotlin and Python (FastAPI, Flask, Django) source code for security vulnerabilities in chat (code graph, findings, verification, SARIF reports). Requires Java 17+."
     }
   ]
 }

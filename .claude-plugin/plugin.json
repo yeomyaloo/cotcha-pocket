@@ -1,8 +1,8 @@
 {
   "name": "cotcha",
   "displayName": "Cotcha: catch security bugs in chat",
-  "version": "0.14.0",
-  "description": "Audit Java/Spring and Python/FastAPI source code for security vulnerabilities in chat. Claude plans the audit, investigates entry point to sink paths with a code graph, records findings, re-verifies each one adversarially, and exports Markdown/SARIF reports. Requires Java 17+.",
+  "version": "0.15.0",
+  "description": "Audit Java/Spring, Kotlin and Python (FastAPI, Flask, Django) source code for security vulnerabilities in chat. Claude plans the audit, investigates entry point to sink paths with a code graph, records findings, re-verifies each one adversarially, and exports Markdown/SARIF reports. Requires Java 17+.",
   "author": {
     "name": "hwiju yeom",
     "url": "https://github.com/yeomyaloo"
