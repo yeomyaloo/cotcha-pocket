@@ -147,6 +147,8 @@ Full report: [Markdown](docs/examples/vulnerable-app-report.md) · [image](docs/
 
 ## Tools
 
+Tool arguments are checked against each tool's schema before it runs. An unknown argument is an error, not silently ignored, and the message lists every problem at once with a suggestion (`reason` → "did you mean `reasoning`?"), missing required arguments, allowed values, fields inside `evidence` items, and the tool's full argument list with an example item.
+
 | Tool | What it does | Read-only |
 |---|---|---|
 | `load_repository` | Load a folder path or a public Git https URL (shallow clone) and build the code graph. Languages are detected by file extension (Java/Spring, Kotlin, Python FastAPI/Flask/Django, frontend JS/TS) | |
@@ -370,6 +372,8 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 전체 보고서: [Markdown](docs/examples/vulnerable-app-report.md) · [이미지](docs/images/report-example.png)
 
 ## 도구
+
+도구를 부르기 전에 인자를 스키마와 맞춰 본다. 모르는 인자는 조용히 무시하지 않고 오류로 알리고, 고칠 점을 한 번에 보여준다: 비슷한 이름 제안(`reason` → "`reasoning` 을 말한 건가요?"), 빠진 필수 인자, 허용하는 값, `evidence` 항목 안의 필드, 이 도구의 인자 목록과 항목 예시.
 
 | 도구 | 하는 일 | 읽기 전용 |
 |---|---|---|

@@ -14,6 +14,17 @@ import java.util.function.Function;
 public record ToolDef(String name, String title, String description, Map<String, Object> inputSchema,
                       boolean readOnly, boolean openWorld, Function<Args, String> handler) {
 
+    /** 부르기 전에 인자를 스키마와 맞춰 본다 (모르는 인자·빠진 필수 인자·허용하지 않는 값을 한 번에 알림) */
+    public ToolDef {
+        Function<Args, String> original = handler;
+        Map<String, Object> checkedSchema = inputSchema;
+        String toolName = name;
+        handler = args -> {
+            ToolArgsCheck.validate(toolName, checkedSchema, args);
+            return original.apply(args);
+        };
+    }
+
     /** JSON Schema object 를 만든다. properties 는 순서를 지킨다 */
     public static Map<String, Object> schema(Map<String, Map<String, Object>> properties, List<String> required) {
         Map<String, Object> schema = new LinkedHashMap<>();
