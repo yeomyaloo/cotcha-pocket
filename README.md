@@ -217,7 +217,7 @@ src/main/java/com/codeagent/mcp/
 
 ## Limitations
 
-- Analyzes Java / Spring MVC and Python / FastAPI backends (Kotlin too: Kotlin Spring controllers are entry points and calls between Java and Kotlin are linked), plus pattern-based checks on frontend JS/TS/Vue/HTML (no JS parser or call graph, so frontend sinks are candidates found line by line).
+- Analyzes Java / Spring MVC and Python / FastAPI backends (Kotlin too: Kotlin Spring controllers and WebFlux functional routers in both languages are entry points, and calls between Java and Kotlin are linked), plus pattern-based checks on frontend JS/TS/Vue/HTML (no JS parser or call graph, so frontend sinks are candidates found line by line).
 - Python has no type inference: calls on parameters of unknown type are not followed (SQL is still flagged when a built query string reaches an `execute`-like method). Flask/Django routes are not detected yet. Python parsing uses native tree-sitter libraries, which are not available on Windows on ARM (Python files are skipped there).
 - `check_dependencies` does not run the build, so transitive dependencies are checked only when a `gradle.lockfile` exists, and versions set only by a BOM are reported as unknown.
 - The code graph is static analysis and can be wrong, which is why Claude must read the actual code before judging.
@@ -441,7 +441,7 @@ src/main/java/com/codeagent/mcp/
 
 ## 한계
 
-- Java/Spring MVC 와 Python/FastAPI 백엔드를 분석하고(Kotlin 도 본다. Kotlin 으로 쓴 Spring 컨트롤러도 진입점이고, Java ↔ Kotlin 호출을 잇는다), 프론트엔드 JS/TS/Vue/HTML은 패턴으로만 점검한다(JS 파서·호출 그래프가 없어서 줄 단위로 찾은 후보다).
+- Java/Spring MVC 와 Python/FastAPI 백엔드를 분석하고(Kotlin 도 본다. Kotlin 으로 쓴 Spring 컨트롤러와 두 언어의 WebFlux 함수형 라우터도 진입점이고, Java ↔ Kotlin 호출을 잇는다), 프론트엔드 JS/TS/Vue/HTML은 패턴으로만 점검한다(JS 파서·호출 그래프가 없어서 줄 단위로 찾은 후보다).
 - Python 은 타입 추론을 하지 않아서 타입을 모르는 파라미터의 메서드 호출은 따라가지 않는다(조립한 쿼리 문자열이 `execute` 류에 닿으면 SQL 로는 잡는다). Flask/Django 라우트는 아직 찾지 않는다. Python 파싱은 tree-sitter 네이티브 라이브러리를 쓰는데 Windows ARM 용이 없어서 그 환경에서는 파이썬 파일을 건너뛴다.
 - `check_dependencies`는 빌드를 실행하지 않으므로 전이 의존성은 `gradle.lockfile`이 있을 때만 검사되고, BOM으로만 버전이 정해진 라이브러리는 버전 모름으로 나온다.
 - 코드 그래프는 정적 분석이라 틀릴 수 있다. 그래서 판단은 반드시 Claude가 실제 코드를 읽고 내리게 되어 있다.
