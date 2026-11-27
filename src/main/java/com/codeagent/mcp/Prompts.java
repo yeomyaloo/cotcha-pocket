@@ -27,6 +27,10 @@ final class Prompts {
                 %s
                 이어서 list_sink_paths 로 진입점 → 위험 지점 경로를 보고, 위험도가 높은 분류(COMMAND, CODE_INJECTION, DESERIALIZATION, SQL 등)부터, 그다음 XXE·IDOR(소유자 확인 누락 후보)·PATH·SSRF·XSS, 마지막으로 WEAK_CRYPTO·WEAK_RANDOM 순으로 최대 %s개를 고릅니다.
                 list_sinks 에서 [프론트엔드]로 표시된 JS/TS 위험 지점은 진입점 경로가 없으니 파일별 항목으로 넣고, 값의 출처(URL·postMessage·다른 사용자가 쓴 API 응답)와 정리 여부(DOMPurify)를 봅니다.
+                경로로 드러나지 않는 운영용 엔드포인트도 항목으로 넣습니다: 인증 없이 열린 지표(/metrics, prom-client, health·info 밖의 /actuator/*),
+                로그·설정·환경 변수 조회, 디렉터리 목록(serveIndex, autoindex), 정적 파일로 내주는 백업·키·.git 폴더, 디버그·API 문서(/debug/pprof, /swagger, /h2-console,
+                Django DEBUG=True, Flask debug=True). list_entry_points(/metrics, /logs, <static> 처리기)와 grep_code 로 찾고, 앞에서 인증을 요구하는지 봅니다
+                (CWE-200/306/548, 노출된 엔드포인트마다 발견 하나, 무엇이 새는지 적음).
                 check_dependencies 로 알려진 취약점(CVE)이 있는 라이브러리(Maven·npm)도 보고, 심각한 것은 취약한 기능을 코드가 실제로 쓰는지 확인할 항목으로 넣습니다.
                 고른 경로를 번호를 붙여 보여주고(경로마다 진입점, 분류·CWE, 무엇을 확인할지 한 줄), 사용자에게 승인을 받습니다.
                 사용자가 빼거나 더할 항목을 말하면 반영하고, 승인한 항목만 조사합니다. 거절하면 아무것도 기록하지 않고 멈춥니다.
