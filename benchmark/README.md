@@ -34,6 +34,8 @@ Three blind runs (plugin 0.21.0, cotcha-trail 0.18.0). Each run was a separate a
 - The first scoring found two bugs in the answer key, not in the audits, and they are fixed. All three runs reported the reset token as CWE-330, but the key accepted only CWE-338 (the shop-app key accepts 330/338/340). A trap's line range also covered the whole handler, so that wrong-CWE hit was counted as a trap.
 - All three runs also noticed that lodash `^4.17.21` already blocks `__proto__` in `merge`, so the prototype-pollution item was only marked uncertain/low. `package.json` now pins lodash 4.17.4, where `merge` is exploitable (fixed in 4.17.5).
 
+**Rerun on the fixed app (lodash 4.17.4):** three new blind runs under the same instructions. Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/9 in every run. All 12 findings in each run were confirmed, and prototype pollution is now confirmed as high instead of left uncertain. The same outcome for 21/21 items, mean Jaccard 1.00 (also with `--confirmed-only`).
+
 
 ---
 
@@ -72,4 +74,6 @@ python benchmark/score.py benchmark/shop-app.expected.json report-*.sarif --conf
 - 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/9. 21개 항목 모두 세 번 같은 결론, 평균 자카드 1.00.
 - 처음 채점할 때 분석이 아니라 정답 파일에서 버그 두 개가 나와서 고쳤다. 세 번 모두 재설정 토큰을 CWE-330 으로 보고했는데, 정답은 CWE-338 만 인정했다(shop-app 정답은 330·338·340 을 인정한다). 또 함정 하나의 줄 범위가 처리기 전체를 덮어서, CWE 가 다른 그 발견이 함정 오탐으로 잡혔다.
 - 세 번 모두 lodash `^4.17.21` 은 `merge` 에서 `__proto__` 를 이미 막는다고 짚어서, 프로토타입 오염 항목을 불확실·낮음으로만 남겼다. 그래서 `package.json` 에서 lodash 를 4.17.4 로 고정했다. 이 버전의 `merge` 는 공격할 수 있다(4.17.5 에서 고쳐짐).
+
+**고친 앱으로 다시 돌린 결과 (lodash 4.17.4):** 같은 지시로 블라인드 3번을 새로 돌렸다. 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/9. 실행마다 발견 12개를 모두 확정했고, 프로토타입 오염도 이제 불확실이 아니라 높음으로 확정한다. 21개 항목 모두 세 번 같은 결론, 평균 자카드 1.00(`--confirmed-only` 로도 같다).
 
