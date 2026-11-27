@@ -51,6 +51,10 @@ Three blind runs (plugin 0.22.0, cotcha-trail 0.19.0), same instructions as node
 
 Three blind runs (plugin 0.23.0, cotcha-trail 0.20.0), same instructions as the other apps. Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/8 in every run. All 11 findings confirmed in each run, the same outcome for 19/19 items, mean Jaccard 1.00. Every run followed the search query through the repository interface into the SQL string, noted that `unserialize` had no `allowed_classes` limit, and judged the `escapeshellarg` + allow-list report command safe. No run tripped over `reason`/`reasoning` (accepted as an alias since 0.22.1).
 
+## Results: ruby-shop (blind)
+
+Three blind runs (plugin 0.24.0, cotcha-trail 0.21.0), same instructions as the other apps. Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/7 in every run. All 11 findings confirmed in each run, the same outcome for 18/18 items, mean Jaccard 1.00. Every run recognized the `Kernel#open` pipe (`|cmd`) as command injection, noted that `allow_other_host: true` turns off Rails 7's redirect protection, and judged the allow-listed `system('pg_dump', ...)` with separate arguments safe.
+
 ---
 
 # 벤치마크
@@ -104,3 +108,7 @@ node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.
 ## 결과: php-shop (블라인드)
 
 다른 앱과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.23.0, cotcha-trail 0.20.0). 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/8. 실행마다 발견 11개를 모두 확정했고, 19개 항목 모두 세 번 같은 결론, 평균 자카드 1.00. 세 번 모두 검색어를 저장소 인터페이스를 거쳐 SQL 문자열까지 따라갔고, `unserialize` 에 `allowed_classes` 제한이 없다고 짚었으며, `escapeshellarg` + 허용 목록을 쓰는 리포트 명령은 안전하다고 봤다. `reason`·`reasoning` 인자 실수는 한 번도 없었다(0.22.1 부터 별칭으로 받는다).
+
+## 결과: ruby-shop (블라인드)
+
+다른 앱과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.24.0, cotcha-trail 0.21.0). 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/7. 실행마다 발견 11개를 모두 확정했고, 18개 항목 모두 세 번 같은 결론, 평균 자카드 1.00. 세 번 모두 `Kernel#open` 파이프(`|명령`)를 명령 주입으로 봤고, `allow_other_host: true` 가 Rails 7 의 리다이렉트 보호를 끈다고 짚었으며, 허용 목록과 인자를 나눈 `system('pg_dump', ...)` 은 안전하다고 봤다.
