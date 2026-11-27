@@ -45,6 +45,10 @@ Three blind runs (plugin 0.21.0, cotcha-trail 0.18.0). Each run was a separate a
 
 Three blind runs (plugin 0.22.0, cotcha-trail 0.19.0), same instructions as node-shop. Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/8 in every run. All 11 findings confirmed in each run, the same outcome for 19/19 items, mean Jaccard 1.00. Every run followed the search query through the `Store` interface into the SQL string and judged the payment-status request safe because its host comes from config and the id is escaped. Two runs lowered the `template.HTML` XSS to low because the route needs a Bearer header, which a browser following a link does not send.
 
+## Results: php-shop (blind)
+
+Three blind runs (plugin 0.23.0, cotcha-trail 0.20.0), same instructions as the other apps. Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/8 in every run. All 11 findings confirmed in each run, the same outcome for 19/19 items, mean Jaccard 1.00. Every run followed the search query through the repository interface into the SQL string, noted that `unserialize` had no `allowed_classes` limit, and judged the `escapeshellarg` + allow-list report command safe. No run tripped over `reason`/`reasoning` (accepted as an alias since 0.22.1).
+
 ---
 
 # 벤치마크
@@ -92,3 +96,7 @@ python benchmark/score.py benchmark/shop-app.expected.json report-*.sarif --conf
 ## 결과: go-shop (블라인드)
 
 node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.0, cotcha-trail 0.19.0). 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/8. 실행마다 발견 11개를 모두 확정했고, 19개 항목 모두 세 번 같은 결론, 평균 자카드 1.00. 세 번 모두 검색어를 `Store` 인터페이스를 거쳐 SQL 문자열까지 따라갔고, 결제 상태 요청은 호스트가 설정 값이고 id 를 이스케이프해서 안전하다고 봤다. 두 번은 `template.HTML` XSS 를 낮음으로 내렸다. 그 라우트는 Bearer 헤더가 필요해서, 링크를 따라간 브라우저는 그 헤더를 보내지 않기 때문이다.
+
+## 결과: php-shop (블라인드)
+
+다른 앱과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.23.0, cotcha-trail 0.20.0). 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/8. 실행마다 발견 11개를 모두 확정했고, 19개 항목 모두 세 번 같은 결론, 평균 자카드 1.00. 세 번 모두 검색어를 저장소 인터페이스를 거쳐 SQL 문자열까지 따라갔고, `unserialize` 에 `allowed_classes` 제한이 없다고 짚었으며, `escapeshellarg` + 허용 목록을 쓰는 리포트 명령은 안전하다고 봤다. `reason`·`reasoning` 인자 실수는 한 번도 없었다(0.22.1 부터 별칭으로 받는다).
