@@ -7,11 +7,13 @@ An evaluation harness that measures how well an audit with this plugin finds vul
 | `shop-app/` | A small Spring + React shop with **11 real vulnerabilities** and **10 safe look-alikes** (traps): each vulnerable spot has a safe twin of the same category. There are no hint comments in the code. |
 | `node-shop/` | A Node.js (Express) shop API with **12 real vulnerabilities** and **9 safe look-alikes**, including Node-specific ones (NoSQL operator injection, prototype pollution, `node-serialize`). No hint comments either. |
 | `node-shop.expected.json` | Its answer key, in the same format and also outside the app folder. |
+| `go-shop/` | A Go (gin + database/sql) shop API with **11 real vulnerabilities** and **8 safe look-alikes**, including Go-specific ones (`template.HTML`, template injection, `InsecureSkipVerify`, interface calls into the store). |
+| `go-shop.expected.json` | Its answer key. |
 | `shop-app.expected.json` | The answer key: file, line range, sink line, accepted CWEs and entry point of each item. It lives **outside** `shop-app/` so Claude cannot read it while auditing. |
 | `score.py` | Scores one or more SARIF reports against the answer key: recall, precision, trap false positives, wrong CWE, duplicates and, for several runs, consistency. |
 | `test_score.py` | Tests for the scoring rules. |
 
-`BenchmarkTest` (part of `./gradlew test`, runs in CI) checks, for both apps, that every vulnerability and trap shows up in `list_sinks`, nothing else does, and each vulnerability with an entry point shows up in `list_sink_paths`.
+`BenchmarkTest` (part of `./gradlew test`, runs in CI) checks, for every app, that every vulnerability and trap shows up in `list_sinks`, nothing else does, and each vulnerability with an entry point shows up in `list_sink_paths`.
 
 ## Scoring an audit (manual)
 
@@ -48,11 +50,13 @@ Three blind runs (plugin 0.21.0, cotcha-trail 0.18.0). Each run was a separate a
 | `shop-app/` | 작은 Spring + React 쇼핑몰. **진짜 취약점 11개**와 비슷하게 생겼지만 **안전한 코드 10개**(함정)를 섞었다. 취약한 곳마다 같은 분류의 안전한 짝이 있다. 코드에 힌트 주석은 없다. |
 | `node-shop/` | Node.js(Express) 쇼핑몰 API. **진짜 취약점 12개**와 **안전한 함정 9개**, Node 에만 있는 것(NoSQL 연산자 주입, 프로토타입 오염, `node-serialize`)도 들어 있다. 힌트 주석은 없다. |
 | `node-shop.expected.json` | 그 정답 파일. 형식이 같고 역시 앱 폴더 밖에 둔다. |
+| `go-shop/` | Go(gin + database/sql) 쇼핑몰 API. **진짜 취약점 11개**와 **안전한 함정 8개**, Go 에만 있는 것(`template.HTML`, 템플릿 주입, `InsecureSkipVerify`, 저장소 인터페이스 호출)도 들어 있다. |
+| `go-shop.expected.json` | 그 정답 파일. |
 | `shop-app.expected.json` | 정답 파일. 항목마다 파일, 줄 범위, 위험 지점 줄, 인정하는 CWE, 진입점을 적었다. Claude 가 분석 중에 읽지 못하도록 `shop-app/` **밖**에 둔다. |
 | `score.py` | SARIF 보고서를 정답과 비교해 채점한다. 재현율, 정밀도, 함정 오탐, 분류 틀림, 중복, 그리고 여러 번 돌렸으면 일관성. |
 | `test_score.py` | 채점 규칙 테스트. |
 
-`BenchmarkTest`(`./gradlew test` 에 포함, CI 에서 돈다)는 두 앱 모두 정답의 취약점과 함정이 모두 `list_sinks` 에 나오고 그 밖의 것은 없으며, 진입점이 있는 취약점은 `list_sink_paths` 에도 나오는지 확인한다.
+`BenchmarkTest`(`./gradlew test` 에 포함, CI 에서 돈다)는 앱마다 정답의 취약점과 함정이 모두 `list_sinks` 에 나오고 그 밖의 것은 없으며, 진입점이 있는 취약점은 `list_sink_paths` 에도 나오는지 확인한다.
 
 ## 분석 채점하기 (수동)
 

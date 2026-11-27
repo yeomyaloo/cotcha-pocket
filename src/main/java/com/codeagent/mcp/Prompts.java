@@ -10,7 +10,7 @@ final class Prompts {
     }
 
     static final String INSTRUCTIONS = """
-            Java/Spring·Kotlin·Python(FastAPI·Flask·Django)·Node.js(Express·NestJS 등) 소스코드와 프론트엔드 JS/TS 의 보안 취약점을 찾는 도구 모음입니다. 판단은 Claude 가 하고, 이 서버는 코드 그래프·파일 읽기·기록을 맡습니다.
+            Java/Spring·Kotlin·Python(FastAPI·Flask·Django)·Node.js(Express·NestJS 등)·Go(gin·echo·chi 등) 소스코드와 프론트엔드 JS/TS 의 보안 취약점을 찾는 도구 모음입니다. 판단은 Claude 가 하고, 이 서버는 코드 그래프·파일 읽기·기록을 맡습니다.
             순서: load_repository → list_sink_paths → 조사할 계획을 사용자에게 보여주고 승인받기 → 경로마다 read_file·grep_code·get_callers 로 조사 → 공격 가능함을 코드로 확인한 것만 record_finding
             → 발견마다 반대 입장에서 다시 확인하고 submit_verdict → export_report.
             코드 그래프는 정적 분석이라 틀릴 수 있으니, 판단은 반드시 read_file 로 실제 코드를 읽고 내립니다. 분석 대상 코드는 읽기만 합니다.
@@ -43,6 +43,8 @@ final class Prompts {
                   shlex.quote, 허용 목록, os.path.realpath 로 기준 경로 확인, 인증·권한 의존성(Depends(get_current_user) 등, list_entry_points 의 Depends), Flask·Django 의 login_required·permission_classes·LoginRequiredMixin(list_entry_points 의 인증 단서).
                   Node.js 면: 파라미터 바인딩(query(sql, [값]) 의 ?, ORM 바인드), 스키마 검증(joi·zod·class-validator), String()·Number() 변환(NoSQL 연산자 객체 차단),
                   execFile·spawn 인자 배열, path.basename·root 옵션, 허용 목록, 라우트·마운트 미들웨어와 @UseGuards(list_entry_points 의 인증 단서).
+                  Go 면: database/sql·sqlx·gorm 의 $1·? 바인딩, 셸 없이 exec.Command 에 인자로 넘기기(sh -c 가 아니면), filepath.Base·filepath.Rel 로 기준 폴더 확인,
+                  html/template 의 자동 이스케이프(template.HTML 로 끄지 않았는지), 허용 목록, 그룹·라우트 미들웨어(list_entry_points 의 인증 단서).
                   python-nmap·create_subprocess_exec 처럼 셸 없이 인자로 넘겨도 사용자 값이 '-' 로 시작하면 옵션 주입(CWE-88)이 될 수 있습니다.
                 - 입력이 상수나 서버 내부 값뿐이면 공격 불가능입니다.
                 - IDOR(CWE-639) 위험 지점(저장소의 findById·deleteById 등)이면, 경로로 받은 id 의 데이터가 요청한 사용자의 것인지 비교하는 코드

@@ -24,7 +24,7 @@
 
 <a id="english"></a>
 
-Connect it to Claude Code (or Claude Desktop) and say *"audit this repository for security issues"*. Claude uses this server's tools to follow **entry point → dangerous API (sink)** paths through Java/Spring, Kotlin, Python (FastAPI, Flask, Django) or Node.js (Express, Koa, Fastify, NestJS, Next.js) code, records vulnerabilities, re-verifies each one from the opposite side, and writes a report.
+Connect it to Claude Code (or Claude Desktop) and say *"audit this repository for security issues"*. Claude uses this server's tools to follow **entry point → dangerous API (sink)** paths through Java/Spring, Kotlin, Python (FastAPI, Flask, Django) , Node.js (Express, Koa, Fastify, NestJS, Next.js) or Go (net/http, gin, echo, chi, gorilla/mux, fiber) code, records vulnerabilities, re-verifies each one from the opposite side, and writes a report.
 
 - **Runs on your Claude Code login.** A Claude subscription (Pro, Max, Team, …) or an API key, whichever Claude Code uses. There is no separate API key to configure.
 - **No database, no server to host.** Only Java is required. The code graph lives in memory and findings are saved as JSON files.
@@ -151,10 +151,10 @@ Tool arguments are checked against each tool's schema before it runs. An unknown
 
 | Tool | What it does | Read-only |
 |---|---|---|
-| `load_repository` | Load a folder path or a public Git https URL (shallow clone) and build the code graph. Languages are detected by file extension (Java/Spring, Kotlin, Python FastAPI/Flask/Django, Node.js backends when `package.json` depends on express/koa/fastify/NestJS/Next.js, frontend JS/TS) | |
+| `load_repository` | Load a folder path or a public Git https URL (shallow clone) and build the code graph. Languages are detected by file extension (Java/Spring, Kotlin, Python FastAPI/Flask/Django, Node.js backends when `package.json` depends on express/koa/fastify/NestJS/Next.js, Go, frontend JS/TS) | |
 | `list_repositories` | Loaded repositories | ✅ |
 | `list_sink_paths` | Entry point → sink call paths (shortest per pair; riskiest categories first, then shortest) | ✅ |
-| `list_entry_points` | HTTP entry points: Spring MVC, FastAPI routes (with router prefixes and `Depends(...)` dependencies), Flask/Django, Node.js (Express/Koa/Fastify mounts, NestJS, Next.js) with auth hints | ✅ |
+| `list_entry_points` | HTTP entry points: Spring MVC, FastAPI routes (with router prefixes and `Depends(...)` dependencies), Flask/Django, Node.js (Express/Koa/Fastify mounts, NestJS, Next.js), Go (net/http, gin, echo, chi, gorilla/mux, fiber groups and mounts) with auth hints | ✅ |
 | `list_sinks` | Sinks: SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, IDOR, and frontend JS/TS/Vue/HTML patterns marked `[프론트엔드]` (XSS sinks like `dangerouslySetInnerHTML`/`innerHTML`/`v-html`, `eval`, open redirects, tokens in `localStorage`, `postMessage` without origin checks, hardcoded keys with the value masked). Frontend sinks have no entry point path (Spring Data `findById` / `deleteById`-style access by id, a missing-owner-check candidate; owner-scoped queries like `findByIdAndUser` are excluded; also id-only repository queries such as `findByBuyerId` or a single-id `@Query`, MyBatis `@Mapper` methods taking one id, and `save` of a `@RequestBody` object) | ✅ |
 | `check_dependencies` | Libraries in `pom.xml` / `build.gradle(.kts)` / `gradle/libs.versions.toml` / `gradle.lockfile` and npm's `package-lock.json` / `yarn.lock` / `pnpm-lock.yaml` / `package.json` with known vulnerabilities from [OSV](https://osv.dev) (CVE, severity, fixed version). Only coordinates and versions are sent. Each scan is saved with its commit and compared with the previous one (version changes, new and resolved vulnerabilities) | |
 | `find_code_nodes` | Find classes, methods, entry points and sinks by name | ✅ |
@@ -195,8 +195,8 @@ When you change code, run `./gradlew pluginServer`, commit `server/lib`, and bum
 
 - `CodeAgentToolsTest`: each tool's output, input errors, finding storage and reports
 - `McpProtocolTest`: starts the server as a separate process with the SDK's MCP client and calls tools and prompts over real stdio
-- `BenchmarkTest`: the evaluation benchmarks' answer keys (Spring shop-app, Express node-shop) match the code graph (every vulnerability and trap is a sink)
-- **Benchmark (evaluation harness)**: [`benchmark/`](benchmark/README.md) has a small Spring shop app (11 real vulnerabilities, 10 safe look-alikes) and an Express shop API (12 and 9), each with an answer key kept outside the app folder. Audit it with the plugin, export SARIF, and `python benchmark/score.py` reports recall, precision, trap false positives and run-to-run consistency.
+- `BenchmarkTest`: the evaluation benchmarks' answer keys (Spring shop-app, Express node-shop, gin go-shop) match the code graph (every vulnerability and trap is a sink)
+- **Benchmark (evaluation harness)**: [`benchmark/`](benchmark/README.md) has a small Spring shop app (11 real vulnerabilities, 10 safe look-alikes) , an Express shop API (12 and 9) and a gin shop API (11 and 8), each with an answer key kept outside the app folder. Audit it with the plugin, export SARIF, and `python benchmark/score.py` reports recall, precision, trap false positives and run-to-run consistency.
 
 ```
 .claude-plugin/
@@ -204,7 +204,7 @@ When you change code, run `./gradlew pluginServer`, commit `server/lib`, and bum
 └── marketplace.json          makes this repository a plugin marketplace
 skills/security-audit/        audit workflow skill
 server/lib/                   prebuilt server and dependencies (./gradlew pluginServer)
-benchmark/                    evaluation harness: shop-app, node-shop (answer keys outside), score.py
+benchmark/                    evaluation harness: shop-app, node-shop, go-shop (answer keys outside), score.py
 src/main/java/com/codeagent/mcp/
 ├── McpCodeAgent.java         entry point: stdio MCP server, tool and prompt registration
 ├── Prompts.java              security_audit, verify_findings prompts and server instructions
@@ -221,6 +221,7 @@ src/main/java/com/codeagent/mcp/
 
 - Analyzes Java / Spring MVC and Python / FastAPI backends (Kotlin too: Kotlin Spring controllers and WebFlux functional routers in both languages are entry points, and calls between Java and Kotlin are linked), plus pattern-based checks on frontend JS/TS/Vue/HTML (no JS parser or call graph, so frontend sinks are candidates found line by line).
 - Node.js backends (JavaScript and TypeScript) are parsed too: Express, Koa, Fastify, Hono and Restify routes with their mount prefixes, NestJS controllers and Next.js API routes, with middleware and `@UseGuards` as auth hints. Calls are followed through `require`/`import`, classes and NestJS constructor injection; receivers of unknown type (a DB pool, an Express response) are matched by method name (`query`, `findOne`, `sendFile`).
+- Go backends are parsed too: net/http (Go 1.22 method patterns), gin, echo, chi, gorilla/mux and fiber routes with group and mount prefixes, including routers passed into functions; middleware is shown as auth hints. Calls follow Go's declared types (receivers, parameters, struct fields) and interface calls go to the implementing types.
 - Python has no type inference: calls on parameters of unknown type are not followed (SQL is still flagged when a built query string reaches an `execute`-like method). Flask and Django routes are detected too, with auth hints (`login_required`, `permission_classes`, …) per entry point. Python parsing uses native tree-sitter libraries, which are not available on Windows on ARM (Python files are skipped there).
 - `check_dependencies` does not run the build, so transitive dependencies are checked only when a `gradle.lockfile` exists, and versions set only by a BOM are reported as unknown.
 - The code graph is static analysis and can be wrong, which is why Claude must read the actual code before judging.
@@ -251,7 +252,7 @@ src/main/java/com/codeagent/mcp/
 
 **채팅에서 쓰는 AI 코드 보안 분석 에이전트 (Claude Code 플러그인 + MCP 서버)**
 
-Claude Code나 Claude Desktop에 연결하고 "이 저장소 보안 분석해줘"라고 하면 된다. Claude가 이 서버의 도구로 Java/Spring·Kotlin·Python(FastAPI·Flask·Django)·Node.js(Express·Koa·Fastify·NestJS·Next.js) 코드의 **진입점 → 위험 지점** 경로를 따라가며 취약점을 찾고, 입장을 바꿔 다시 검증하고, 보고서를 만든다.
+Claude Code나 Claude Desktop에 연결하고 "이 저장소 보안 분석해줘"라고 하면 된다. Claude가 이 서버의 도구로 Java/Spring·Kotlin·Python(FastAPI·Flask·Django)·Node.js(Express·Koa·Fastify·NestJS·Next.js)·Go(net/http·gin·echo·chi·gorilla/mux·fiber) 코드의 **진입점 → 위험 지점** 경로를 따라가며 취약점을 찾고, 입장을 바꿔 다시 검증하고, 보고서를 만든다.
 
 - **Claude Code에 로그인한 그대로 돈다.** Claude 구독(Pro, Max, Team 등)이든 API 키든 Claude Code가 쓰는 방식 그대로이고, 따로 설정할 API 키가 없다.
 - **DB도 서버도 필요 없다.** Java만 있으면 된다. 코드 그래프는 메모리에, 발견은 JSON 파일에 둔다.
@@ -378,10 +379,10 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 
 | 도구 | 하는 일 | 읽기 전용 |
 |---|---|---|
-| `load_repository` | 폴더 경로 또는 공개 Git https 주소(얕은 클론)로 저장소를 불러와 코드 그래프를 만든다. 언어는 확장자로 판별한다(Java/Spring, Kotlin, Python FastAPI·Flask·Django, `package.json` 이 express·koa·fastify·NestJS·Next.js 에 의존하면 Node.js 백엔드, 프론트엔드 JS/TS) | |
+| `load_repository` | 폴더 경로 또는 공개 Git https 주소(얕은 클론)로 저장소를 불러와 코드 그래프를 만든다. 언어는 확장자로 판별한다(Java/Spring, Kotlin, Python FastAPI·Flask·Django, `package.json` 이 express·koa·fastify·NestJS·Next.js 에 의존하면 Node.js 백엔드, Go, 프론트엔드 JS/TS) | |
 | `list_repositories` | 불러온 저장소 목록 | ✅ |
 | `list_sink_paths` | 진입점 → 위험 지점 호출 경로 (쌍마다 가장 짧은 경로, 위험한 분류부터, 같은 분류면 짧은 순) | ✅ |
-| `list_entry_points` | HTTP 진입점: Spring MVC, FastAPI 라우트(라우터 prefix, `Depends(...)` 의존 함수 포함), Flask·Django, Node.js(Express·Koa·Fastify 마운트, NestJS, Next.js)와 인증 단서 | ✅ |
+| `list_entry_points` | HTTP 진입점: Spring MVC, FastAPI 라우트(라우터 prefix, `Depends(...)` 의존 함수 포함), Flask·Django, Node.js(Express·Koa·Fastify 마운트, NestJS, Next.js), Go(net/http·gin·echo·chi·gorilla/mux·fiber 그룹·마운트)와 인증 단서 | ✅ |
 | `list_sinks` | 위험 지점 (SQL, COMMAND, PATH, DESERIALIZATION, SSRF, CODE_INJECTION, EXPRESSION_INJECTION, JNDI, OPEN_REDIRECT, XXE, XSS, WEAK_CRYPTO, WEAK_RANDOM, `[프론트엔드]`로 표시되는 프론트엔드 JS/TS/Vue/HTML 패턴(`dangerouslySetInnerHTML`·`innerHTML`·`v-html` 같은 XSS, `eval`, 오픈 리다이렉트, `localStorage` 토큰 저장, 출처 확인 없는 `postMessage`, 값을 가린 하드코딩 키. 진입점 경로는 없음), IDOR: Spring Data 저장소의 `findById`·`deleteById` 등 id 접근, 소유자 확인 누락 후보. `findByIdAndUser`처럼 주인 조건이 붙은 쿼리는 제외. 그 밖에 `findByBuyerId`처럼 식별자 하나로만 찾는 저장소 쿼리·id 하나만 받는 `@Query`, id 하나만 받는 MyBatis `@Mapper` 메서드, `@RequestBody` 객체를 그대로 넘기는 `save`도 잡음) | ✅ |
 | `check_dependencies` | `pom.xml`·`build.gradle(.kts)`·`gradle/libs.versions.toml`·`gradle.lockfile`과 npm의 `package-lock.json`·`yarn.lock`·`pnpm-lock.yaml`·`package.json`의 라이브러리 중 [OSV](https://osv.dev)에 알려진 취약점이 있는 것(CVE, 심각도, 고친 버전). 라이브러리 좌표와 버전만 보낸다. 검사마다 커밋과 함께 기록하고 지난 검사와 비교한다(버전 변경, 새 취약점, 해결된 취약점) | |
 | `find_code_nodes` | 이름으로 클래스·메서드·진입점·위험 지점 찾기 | ✅ |
@@ -423,7 +424,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 - `CodeAgentToolsTest`: 도구마다 결과와 입력 오류 처리, 발견 저장과 보고서
 - `McpProtocolTest`: SDK의 MCP 클라이언트로 서버를 별도 프로세스로 띄워, 실제 stdio 프로토콜로 도구와 프롬프트를 호출한다
 - `BenchmarkTest`: 평가 벤치마크의 정답이 코드 그래프와 맞는지 (취약점과 함정이 모두 위험 지점인지)
-- **벤치마크 (평가 하네스)**: [`benchmark/`](benchmark/README.md)에 작은 Spring 쇼핑몰(진짜 취약점 11개, 안전한 함정 10개)과 Express 쇼핑몰 API(12개, 9개)가 있고, 정답 파일은 각각 앱 폴더 밖에 둔다. 플러그인으로 분석하고 SARIF 로 내보내면 `python benchmark/score.py` 가 재현율, 정밀도, 함정 오탐, 실행 간 일관성을 알려준다.
+- **벤치마크 (평가 하네스)**: [`benchmark/`](benchmark/README.md)에 작은 Spring 쇼핑몰(진짜 취약점 11개, 안전한 함정 10개), Express 쇼핑몰 API(12개, 9개), gin 쇼핑몰 API(11개, 8개)가 있고, 정답 파일은 각각 앱 폴더 밖에 둔다. 플러그인으로 분석하고 SARIF 로 내보내면 `python benchmark/score.py` 가 재현율, 정밀도, 함정 오탐, 실행 간 일관성을 알려준다.
 
 ```
 .claude-plugin/
@@ -431,7 +432,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 └── marketplace.json          이 저장소를 플러그인 마켓플레이스로 만듦
 skills/security-audit/        분석 순서 스킬
 server/lib/                   미리 빌드한 서버와 의존 라이브러리 (./gradlew pluginServer)
-benchmark/                    평가 하네스: shop-app, node-shop(정답은 밖에), score.py
+benchmark/                    평가 하네스: shop-app, node-shop, go-shop(정답은 밖에), score.py
 src/main/java/com/codeagent/mcp/
 ├── McpCodeAgent.java         진입점. stdio MCP 서버, 도구·프롬프트 등록
 ├── Prompts.java              security_audit, verify_findings 프롬프트와 서버 안내문
@@ -448,6 +449,7 @@ src/main/java/com/codeagent/mcp/
 
 - Java/Spring MVC 와 Python/FastAPI 백엔드를 분석하고(Kotlin 도 본다. Kotlin 으로 쓴 Spring 컨트롤러와 두 언어의 WebFlux 함수형 라우터도 진입점이고, Java ↔ Kotlin 호출을 잇는다), 프론트엔드 JS/TS/Vue/HTML은 패턴으로만 점검한다(JS 파서·호출 그래프가 없어서 줄 단위로 찾은 후보다).
 - Node.js 백엔드(JavaScript·TypeScript)도 파싱한다: Express·Koa·Fastify·Hono·Restify 라우트와 마운트 경로, NestJS 컨트롤러, Next.js API 라우트. 미들웨어와 `@UseGuards` 는 인증 단서로 보여준다. 호출은 `require`·`import`·클래스·NestJS 생성자 주입으로 따라가고, 타입을 모르는 받는 쪽(DB 풀, Express 응답)은 메서드 이름(`query`, `findOne`, `sendFile`)으로 맞춘다.
+- Go 백엔드도 파싱한다: net/http(Go 1.22 메서드 패턴), gin, echo, chi, gorilla/mux, fiber 라우트와 그룹·마운트 경로, 함수로 넘긴 라우터까지. 미들웨어는 인증 단서로 보여준다. 호출은 Go 에 적힌 타입(리시버, 파라미터, 구조체 필드)으로 따라가고, 인터페이스 호출은 그것을 채우는 타입으로 잇는다.
 - Python 은 타입 추론을 하지 않아서 타입을 모르는 파라미터의 메서드 호출은 따라가지 않는다(조립한 쿼리 문자열이 `execute` 류에 닿으면 SQL 로는 잡는다). Flask·Django 라우트도 찾고, 진입점마다 인증 단서(`login_required`, `permission_classes` 등)를 보여준다. Python 파싱은 tree-sitter 네이티브 라이브러리를 쓰는데 Windows ARM 용이 없어서 그 환경에서는 파이썬 파일을 건너뛴다.
 - `check_dependencies`는 빌드를 실행하지 않으므로 전이 의존성은 `gradle.lockfile`이 있을 때만 검사되고, BOM으로만 버전이 정해진 라이브러리는 버전 모름으로 나온다.
 - 코드 그래프는 정적 분석이라 틀릴 수 있다. 그래서 판단은 반드시 Claude가 실제 코드를 읽고 내리게 되어 있다.

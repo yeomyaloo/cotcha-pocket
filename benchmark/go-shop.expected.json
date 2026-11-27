@@ -1,0 +1,273 @@
+{
+  "name": "go-shop",
+  "description": "Go(gin + database/sql) 쇼핑몰 API 예제. 요청 값이 위험 호출까지 가는 취약점 11개와, 위험 호출처럼 보이지만 안전한 함정 8개. 정답은 분석 대상 폴더 밖에 둔다.",
+  "vulnerabilities": [
+    {
+      "id": "sql-search",
+      "category": "SQL",
+      "cwe": [
+        "CWE-89"
+      ],
+      "file": "internal/store/store.go",
+      "lines": [
+        62,
+        69
+      ],
+      "sinkLine": 64,
+      "entryPoint": "GET /api/products/search",
+      "why": "검색어를 문자열 + 로 SQL 에 붙인다"
+    },
+    {
+      "id": "path-image",
+      "category": "PATH",
+      "cwe": [
+        "CWE-22",
+        "CWE-23",
+        "CWE-73"
+      ],
+      "file": "internal/handlers/products.go",
+      "lines": [
+        44,
+        51
+      ],
+      "sinkLine": 45,
+      "entryPoint": "GET /api/images",
+      "why": "file 쿼리 값을 filepath.Join 으로 붙여 ../ 로 이미지 폴더 밖 파일을 읽는다"
+    },
+    {
+      "id": "weak-hash-password",
+      "category": "WEAK_CRYPTO",
+      "cwe": [
+        "CWE-327",
+        "CWE-328",
+        "CWE-759",
+        "CWE-916"
+      ],
+      "file": "internal/handlers/account.go",
+      "lines": [
+        25,
+        42
+      ],
+      "sinkLine": 26,
+      "entryPoint": "POST /api/auth/login",
+      "why": "비밀번호를 솔트 없는 MD5 로 저장·비교한다"
+    },
+    {
+      "id": "weak-random-reset",
+      "category": "WEAK_RANDOM",
+      "cwe": [
+        "CWE-330",
+        "CWE-338",
+        "CWE-340"
+      ],
+      "file": "internal/handlers/account.go",
+      "lines": [
+        44,
+        52
+      ],
+      "sinkLine": 46,
+      "entryPoint": "POST /api/auth/reset",
+      "why": "비밀번호 재설정 토큰을 math/rand 로 만든다"
+    },
+    {
+      "id": "ssrf-avatar",
+      "category": "SSRF",
+      "cwe": [
+        "CWE-918"
+      ],
+      "file": "internal/handlers/account.go",
+      "lines": [
+        54,
+        63
+      ],
+      "sinkLine": 55,
+      "entryPoint": "POST /api/account/avatar",
+      "why": "사용자가 준 URL 로 서버가 요청을 보낸다"
+    },
+    {
+      "id": "xss-profile-bio",
+      "category": "XSS",
+      "cwe": [
+        "CWE-79",
+        "CWE-80"
+      ],
+      "file": "internal/handlers/account.go",
+      "lines": [
+        65,
+        75
+      ],
+      "sinkLine": 71,
+      "entryPoint": "GET /api/account/profile",
+      "why": "bio 쿼리 값을 template.HTML 로 바꿔 html/template 의 이스케이프를 끈다"
+    },
+    {
+      "id": "redirect-logout",
+      "category": "OPEN_REDIRECT",
+      "cwe": [
+        "CWE-601"
+      ],
+      "file": "internal/handlers/account.go",
+      "lines": [
+        77,
+        80
+      ],
+      "sinkLine": 79,
+      "entryPoint": "GET /api/auth/logout",
+      "why": "next 파라미터로 외부 주소에 리다이렉트한다"
+    },
+    {
+      "id": "xss-search-page",
+      "category": "XSS",
+      "cwe": [
+        "CWE-79",
+        "CWE-80"
+      ],
+      "file": "internal/handlers/account.go",
+      "lines": [
+        90,
+        92
+      ],
+      "sinkLine": 91,
+      "entryPoint": "GET /api/search",
+      "why": "검색어를 이스케이프하지 않고 text/html 로 돌려준다"
+    },
+    {
+      "id": "command-export",
+      "category": "COMMAND",
+      "cwe": [
+        "CWE-78",
+        "CWE-77"
+      ],
+      "file": "internal/handlers/admin.go",
+      "lines": [
+        13,
+        21
+      ],
+      "sinkLine": 15,
+      "entryPoint": "POST /api/admin/export",
+      "why": "dir 파라미터를 sh -c 명령 문자열에 넣는다 (관리자만 가능하지만 셸 명령 주입)"
+    },
+    {
+      "id": "ssti-preview",
+      "category": "CODE_INJECTION",
+      "cwe": [
+        "CWE-1336",
+        "CWE-94",
+        "CWE-74"
+      ],
+      "file": "internal/handlers/admin.go",
+      "lines": [
+        37,
+        45
+      ],
+      "sinkLine": 38,
+      "entryPoint": "POST /api/admin/templates/preview",
+      "why": "요청 본문을 템플릿으로 파싱해 설정(JWT 비밀값 포함)을 데이터로 넘겨 실행한다"
+    },
+    {
+      "id": "insecure-tls-payments",
+      "category": "WEAK_CRYPTO",
+      "cwe": [
+        "CWE-295"
+      ],
+      "file": "internal/payments/client.go",
+      "lines": [
+        20,
+        28
+      ],
+      "sinkLine": 22,
+      "entryPoint": null,
+      "why": "결제 서버 TLS 인증서 검증을 끈다 (InsecureSkipVerify)"
+    }
+  ],
+  "safe": [
+    {
+      "id": "sql-sort-allowlist",
+      "category": "SQL",
+      "file": "internal/store/store.go",
+      "lines": [
+        50,
+        60
+      ],
+      "sinkLine": 55,
+      "why": "정렬 컬럼을 허용 목록 맵에서만 고른다"
+    },
+    {
+      "id": "sha1-etag",
+      "category": "WEAK_CRYPTO",
+      "file": "internal/handlers/products.go",
+      "lines": [
+        14,
+        24
+      ],
+      "sinkLine": 21,
+      "why": "SHA-1 을 보안이 아닌 ETag 계산에만 쓴다"
+    },
+    {
+      "id": "path-thumb-base",
+      "category": "PATH",
+      "file": "internal/handlers/products.go",
+      "lines": [
+        53,
+        61
+      ],
+      "sinkLine": 55,
+      "why": "filepath.Base 로 디렉터리를 떼서 썸네일 폴더 밖으로 못 나간다"
+    },
+    {
+      "id": "redirect-allowlist",
+      "category": "OPEN_REDIRECT",
+      "file": "internal/handlers/account.go",
+      "lines": [
+        82,
+        88
+      ],
+      "sinkLine": 87,
+      "why": "허용 목록에 있는 내부 경로로만 리다이렉트한다"
+    },
+    {
+      "id": "xss-escaped",
+      "category": "XSS",
+      "file": "internal/handlers/account.go",
+      "lines": [
+        94,
+        96
+      ],
+      "sinkLine": 95,
+      "why": "html.EscapeString 으로 이스케이프한 뒤 넣는다"
+    },
+    {
+      "id": "random-shuffle",
+      "category": "WEAK_RANDOM",
+      "file": "internal/handlers/account.go",
+      "lines": [
+        98,
+        102
+      ],
+      "sinkLine": 100,
+      "why": "추천 목록 섞기에만 쓴다 (보안과 무관)"
+    },
+    {
+      "id": "command-allowlist",
+      "category": "COMMAND",
+      "file": "internal/handlers/admin.go",
+      "lines": [
+        23,
+        35
+      ],
+      "sinkLine": 29,
+      "why": "셸 없이 인자 목록으로 넘기고 테이블 이름은 허용 목록에서만 고른다"
+    },
+    {
+      "id": "ssrf-payment-fixed-host",
+      "category": "SSRF",
+      "file": "internal/payments/client.go",
+      "lines": [
+        30,
+        41
+      ],
+      "sinkLine": 31,
+      "why": "호스트는 설정 값이고 결제 id 는 DB 값을 url.PathEscape 한다"
+    }
+  ]
+}

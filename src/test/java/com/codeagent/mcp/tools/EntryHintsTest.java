@@ -41,6 +41,13 @@ class EntryHintsTest {
         assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("javascript"))).isEqualTo("**.java");
     }
 
+    @Test
+    void Go_처리기는_마지막_폴더부터_보여주고_grep_기본_대상은_go_다() {
+        Node node = entry(Map.of("language", "go"));
+        assertThat(CodeAgentTools.shortName(node, "internal/handlers#Handler.Search")).isEqualTo("handlers#Handler.Search");
+        assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("go"))).isEqualTo("**.go");
+    }
+
     private static Node entry(Map<String, Object> props) {
         return new Node(1, CodeNodeKind.ENTRY_POINT, "GET /x -> h", "a.py", 1, props);
     }
