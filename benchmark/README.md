@@ -26,6 +26,15 @@ python benchmark/score.py benchmark/shop-app.expected.json report-*.sarif --conf
 
 Rules: a finding points at an item when one of its locations is inside the item's file and line range. With an accepted CWE it is a hit, with another CWE a wrong category. Pointing at a trap is a trap false positive; pointing at nothing is another false positive. Rejected findings are ignored. Consistency is the share of items that got the same outcome in every run, plus the mean Jaccard similarity between runs.
 
+## Results: node-shop (blind)
+
+Three blind runs (plugin 0.21.0, cotcha-trail 0.18.0). Each run was a separate agent that audited a copy of `node-shop/` with the plugin tools and could not read the answer key. `check_dependencies` was not used.
+
+- Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/9 in every run. The same outcome for 21/21 items, mean Jaccard 1.00.
+- The first scoring found two bugs in the answer key, not in the audits, and they are fixed. All three runs reported the reset token as CWE-330, but the key accepted only CWE-338 (the shop-app key accepts 330/338/340). A trap's line range also covered the whole handler, so that wrong-CWE hit was counted as a trap.
+- All three runs also noticed that lodash `^4.17.21` already blocks `__proto__` in `merge`, so the prototype-pollution item was only marked uncertain/low. `package.json` now pins lodash 4.17.4, where `merge` is exploitable (fixed in 4.17.5).
+
+
 ---
 
 # 벤치마크
@@ -55,3 +64,12 @@ python benchmark/score.py benchmark/shop-app.expected.json report-*.sarif --conf
 ```
 
 규칙: 발견의 위치 중 하나가 항목의 파일·줄 범위 안에 있으면 그 항목을 가리킨 것이다. CWE 가 인정 목록에 있으면 맞힌 것, 다르면 분류 틀림이다. 함정을 가리키면 함정 오탐, 아무것도 가리키지 않으면 기타 오탐이다. 기각된 발견은 빼고 센다. 일관성은 모든 실행에서 같은 결론이 난 항목의 비율과 실행 간 평균 자카드 유사도다.
+
+## 결과: node-shop (블라인드)
+
+블라인드로 3번 돌렸다(플러그인 0.21.0, cotcha-trail 0.18.0). 실행마다 다른 에이전트가 `node-shop/` 복사본을 플러그인 도구로 분석했고, 정답 파일은 읽을 수 없었다. `check_dependencies` 는 쓰지 않았다.
+
+- 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/9. 21개 항목 모두 세 번 같은 결론, 평균 자카드 1.00.
+- 처음 채점할 때 분석이 아니라 정답 파일에서 버그 두 개가 나와서 고쳤다. 세 번 모두 재설정 토큰을 CWE-330 으로 보고했는데, 정답은 CWE-338 만 인정했다(shop-app 정답은 330·338·340 을 인정한다). 또 함정 하나의 줄 범위가 처리기 전체를 덮어서, CWE 가 다른 그 발견이 함정 오탐으로 잡혔다.
+- 세 번 모두 lodash `^4.17.21` 은 `merge` 에서 `__proto__` 를 이미 막는다고 짚어서, 프로토타입 오염 항목을 불확실·낮음으로만 남겼다. 그래서 `package.json` 에서 lodash 를 4.17.4 로 고정했다. 이 버전의 `merge` 는 공격할 수 있다(4.17.5 에서 고쳐짐).
+

@@ -6,7 +6,8 @@
       "id": "sql-search",
       "category": "SQL",
       "cwe": [
-        "CWE-89"
+        "CWE-89",
+        "CWE-943"
       ],
       "file": "src/routes/products.js",
       "lines": [
@@ -21,7 +22,9 @@
       "id": "path-image",
       "category": "PATH",
       "cwe": [
-        "CWE-22"
+        "CWE-22",
+        "CWE-23",
+        "CWE-73"
       ],
       "file": "src/routes/products.js",
       "lines": [
@@ -36,7 +39,9 @@
       "id": "weak-hash-password",
       "category": "WEAK_CRYPTO",
       "cwe": [
+        "CWE-327",
         "CWE-328",
+        "CWE-759",
         "CWE-916"
       ],
       "file": "src/routes/account.js",
@@ -52,12 +57,14 @@
       "id": "nosql-login",
       "category": "NOSQL_INJECTION",
       "cwe": [
-        "CWE-943"
+        "CWE-943",
+        "CWE-89",
+        "CWE-287"
       ],
       "file": "src/routes/account.js",
       "lines": [
-        26,
-        32
+        27,
+        27
       ],
       "sinkLine": 27,
       "entryPoint": "POST /api/account/login",
@@ -67,12 +74,14 @@
       "id": "weak-random-reset",
       "category": "WEAK_RANDOM",
       "cwe": [
-        "CWE-338"
+        "CWE-330",
+        "CWE-338",
+        "CWE-340"
       ],
       "file": "src/routes/account.js",
       "lines": [
-        34,
-        41
+        36,
+        38
       ],
       "sinkLine": 37,
       "entryPoint": "POST /api/account/password-reset",
@@ -97,7 +106,8 @@
       "id": "proto-preferences",
       "category": "PROTOTYPE_POLLUTION",
       "cwe": [
-        "CWE-1321"
+        "CWE-1321",
+        "CWE-915"
       ],
       "file": "src/routes/account.js",
       "lines": [
@@ -106,7 +116,7 @@
       ],
       "sinkLine": 51,
       "entryPoint": "PUT /api/account/preferences",
-      "why": "요청 본문 전체를 _.merge 해서 __proto__ 키로 Object.prototype 을 오염시킬 수 있다"
+      "why": "lodash 4.17.4 의 _.merge 로 요청 본문 전체를 합쳐서 __proto__ 키로 Object.prototype 을 오염시킬 수 있다 (4.17.5 에서 고쳐짐)"
     },
     {
       "id": "deser-cart",
@@ -142,7 +152,8 @@
       "id": "xss-search-page",
       "category": "XSS",
       "cwe": [
-        "CWE-79"
+        "CWE-79",
+        "CWE-80"
       ],
       "file": "src/routes/account.js",
       "lines": [
@@ -157,7 +168,8 @@
       "id": "command-export",
       "category": "COMMAND",
       "cwe": [
-        "CWE-78"
+        "CWE-78",
+        "CWE-77"
       ],
       "file": "src/routes/admin.js",
       "lines": [
@@ -172,7 +184,8 @@
       "id": "code-eval",
       "category": "CODE_INJECTION",
       "cwe": [
-        "CWE-95"
+        "CWE-95",
+        "CWE-94"
       ],
       "file": "src/routes/admin.js",
       "lines": [
@@ -190,8 +203,8 @@
       "category": "SQL",
       "file": "src/routes/products.js",
       "lines": [
-        12,
-        18
+        13,
+        14
       ],
       "sinkLine": 14,
       "why": "정렬 컬럼을 허용 목록에서만 고른다"
@@ -201,8 +214,8 @@
       "category": "WEAK_CRYPTO",
       "file": "src/routes/products.js",
       "lines": [
-        12,
-        18
+        15,
+        16
       ],
       "sinkLine": 15,
       "why": "SHA-1 을 보안이 아닌 ETag 계산에만 쓴다"
@@ -223,8 +236,8 @@
       "category": "NOSQL_INJECTION",
       "file": "src/routes/account.js",
       "lines": [
-        34,
-        41
+        35,
+        35
       ],
       "sinkLine": 35,
       "why": "String() 으로 바꿔서 연산자 객체가 들어갈 수 없다"
