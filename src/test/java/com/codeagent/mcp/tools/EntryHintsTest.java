@@ -48,6 +48,14 @@ class EntryHintsTest {
         assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("go"))).isEqualTo("**.go");
     }
 
+    @Test
+    void PHP_처리기는_클래스_이름부터_보여주고_grep_기본_대상은_php_다() {
+        Node node = entry(Map.of("language", "php"));
+        assertThat(CodeAgentTools.shortName(node, "App\\Http\\Controllers\\UserController#show")).isEqualTo("UserController#show");
+        assertThat(CodeAgentTools.shortName(node, "public/search.php#<main>")).isEqualTo("search.php#<main>");
+        assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("php"))).isEqualTo("**.php");
+    }
+
     private static Node entry(Map<String, Object> props) {
         return new Node(1, CodeNodeKind.ENTRY_POINT, "GET /x -> h", "a.py", 1, props);
     }

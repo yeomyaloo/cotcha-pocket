@@ -9,6 +9,8 @@ An evaluation harness that measures how well an audit with this plugin finds vul
 | `node-shop.expected.json` | Its answer key, in the same format and also outside the app folder. |
 | `go-shop/` | A Go (gin + database/sql) shop API with **11 real vulnerabilities** and **8 safe look-alikes**, including Go-specific ones (`template.HTML`, template injection, `InsecureSkipVerify`, interface calls into the store). |
 | `go-shop.expected.json` | Its answer key. |
+| `php-shop/` | A PHP (Laravel) shop API with **11 real vulnerabilities** and **8 safe look-alikes**, including PHP-specific ones (`unserialize`, XXE with `LIBXML_NOENT`, `eval`, calls through a repository interface). |
+| `php-shop.expected.json` | Its answer key. |
 | `shop-app.expected.json` | The answer key: file, line range, sink line, accepted CWEs and entry point of each item. It lives **outside** `shop-app/` so Claude cannot read it while auditing. |
 | `score.py` | Scores one or more SARIF reports against the answer key: recall, precision, trap false positives, wrong CWE, duplicates and, for several runs, consistency. |
 | `test_score.py` | Tests for the scoring rules. |
@@ -56,6 +58,8 @@ Three blind runs (plugin 0.22.0, cotcha-trail 0.19.0), same instructions as node
 | `node-shop.expected.json` | 그 정답 파일. 형식이 같고 역시 앱 폴더 밖에 둔다. |
 | `go-shop/` | Go(gin + database/sql) 쇼핑몰 API. **진짜 취약점 11개**와 **안전한 함정 8개**, Go 에만 있는 것(`template.HTML`, 템플릿 주입, `InsecureSkipVerify`, 저장소 인터페이스 호출)도 들어 있다. |
 | `go-shop.expected.json` | 그 정답 파일. |
+| `php-shop/` | PHP(Laravel) 쇼핑몰 API. **진짜 취약점 11개**와 **안전한 함정 8개**, PHP 에만 있는 것(`unserialize`, `LIBXML_NOENT` XXE, `eval`, 저장소 인터페이스 호출)도 들어 있다. |
+| `php-shop.expected.json` | 그 정답 파일. |
 | `shop-app.expected.json` | 정답 파일. 항목마다 파일, 줄 범위, 위험 지점 줄, 인정하는 CWE, 진입점을 적었다. Claude 가 분석 중에 읽지 못하도록 `shop-app/` **밖**에 둔다. |
 | `score.py` | SARIF 보고서를 정답과 비교해 채점한다. 재현율, 정밀도, 함정 오탐, 분류 틀림, 중복, 그리고 여러 번 돌렸으면 일관성. |
 | `test_score.py` | 채점 규칙 테스트. |
