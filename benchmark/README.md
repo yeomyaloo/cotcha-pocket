@@ -57,6 +57,10 @@ Three blind runs (plugin 0.23.0, cotcha-trail 0.20.0), same instructions as the 
 
 Three blind runs (plugin 0.24.0, cotcha-trail 0.21.0), same instructions as the other apps. Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/7 in every run. All 11 findings confirmed in each run, the same outcome for 18/18 items, mean Jaccard 1.00. Every run recognized the `Kernel#open` pipe (`|cmd`) as command injection, noted that `allow_other_host: true` turns off Rails 7's redirect protection, and judged the allow-listed `system('pg_dump', ...)` with separate arguments safe.
 
+## Results: cs-shop (blind)
+
+Three blind runs (plugin 0.25.0, cotcha-trail 0.22.0), same instructions as the other apps. Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/8 in every run. All 11 findings confirmed in each run, the same outcome for 19/19 items, mean Jaccard 1.00. Every run told `FromSqlRaw` (vulnerable) apart from `FromSqlInterpolated` (parameterized), flagged JSON.NET only because of `TypeNameHandling.Auto` and `XmlDocument` only because of `XmlUrlResolver`, and followed the search query through the repository interface injected by the primary constructor. All three also noticed that the JWT setup skips issuer and audience checks and chose not to report it, since the signing key is still validated.
+
 ---
 
 # 벤치마크
@@ -116,3 +120,7 @@ node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.
 ## 결과: ruby-shop (블라인드)
 
 다른 앱과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.24.0, cotcha-trail 0.21.0). 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/7. 실행마다 발견 11개를 모두 확정했고, 18개 항목 모두 세 번 같은 결론, 평균 자카드 1.00. 세 번 모두 `Kernel#open` 파이프(`|명령`)를 명령 주입으로 봤고, `allow_other_host: true` 가 Rails 7 의 리다이렉트 보호를 끈다고 짚었으며, 허용 목록과 인자를 나눈 `system('pg_dump', ...)` 은 안전하다고 봤다.
+
+## 결과: cs-shop (블라인드)
+
+다른 앱과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.25.0, cotcha-trail 0.22.0). 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/8. 실행마다 발견 11개를 모두 확정했고, 19개 항목 모두 세 번 같은 결론, 평균 자카드 1.00. 세 번 모두 `FromSqlRaw`(취약)와 `FromSqlInterpolated`(매개변수화)를 구분했고, JSON.NET 은 `TypeNameHandling.Auto` 때문에, `XmlDocument` 는 `XmlUrlResolver` 때문에만 취약하다고 봤으며, 기본 생성자로 주입한 저장소 인터페이스를 거쳐 검색어를 따라갔다. 세 번 모두 JWT 설정이 발급자·대상 검사를 끈 것도 봤지만, 서명 키는 검사하므로 보고하지 않았다.
