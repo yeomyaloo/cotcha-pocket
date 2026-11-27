@@ -26,6 +26,21 @@ class EntryHintsTest {
         assertThat(CodeAgentTools.dependencies(entry(Map.of()))).isEmpty();
     }
 
+    @Test
+    void Node_처리기는_파일_이름부터_보여준다() {
+        Node node = entry(Map.of("language", "node"));
+        assertThat(CodeAgentTools.shortName(node, "src/routes/products.js#GET /search")).isEqualTo("products.js#GET /search");
+        assertThat(CodeAgentTools.shortName(node, "src/users/users.controller.ts#UsersController.find"))
+                .isEqualTo("users.controller.ts#UsersController.find");
+    }
+
+    @Test
+    void Node_저장소는_grep_기본_대상이_JS_TS_다() {
+        assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("node", "javascript"))).isEqualTo("**.{js,ts,mjs,cjs}");
+        assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("java", "node"))).isEqualTo("**.{java,js,ts,mjs,cjs}");
+        assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("javascript"))).isEqualTo("**.java");
+    }
+
     private static Node entry(Map<String, Object> props) {
         return new Node(1, CodeNodeKind.ENTRY_POINT, "GET /x -> h", "a.py", 1, props);
     }

@@ -74,7 +74,7 @@ public class CodeAgentTools {
     ToolDef loadRepository() {
         return new ToolDef("load_repository", "저장소 불러오기",
                 "분석할 저장소를 불러와 코드 그래프(진입점, 위험 지점, 호출 관계)를 만든다. "
-                        + "언어는 파일 확장자로 판별한다: Java/Spring, Kotlin, Python(FastAPI·Flask·Django), 프론트엔드 JS/TS/Vue/HTML. "
+                        + "언어는 파일 확장자로 판별한다: Java/Spring, Kotlin, Python(FastAPI·Flask·Django), Node.js(package.json 에 express·koa·fastify·NestJS·Next.js 등이 있으면 JS/TS 백엔드), 프론트엔드 JS/TS/Vue/HTML. "
                         + "path(이 컴퓨터의 폴더) 또는 git_url(공개 https 저장소, 얕은 클론) 중 하나를 준다. "
                         + "같은 저장소를 다시 부르면 다시 파싱(Git 이면 최신 커밋으로 다시 클론)한다. 분석의 첫 단계.",
                 schema(props(
@@ -170,9 +170,10 @@ public class CodeAgentTools {
     ToolDef listEntryPoints() {
         return new ToolDef("list_entry_points", "진입점 목록",
                 "HTTP 진입점 목록: Spring MVC 컨트롤러·WebFlux 라우터(Java·Kotlin), FastAPI 라우트(@app.get, @router.post 등, prefix 포함), "
-                        + "Flask(@app.route·블루프린트·add_url_rule·Flask-RESTful), Django(urlpatterns·include·클래스 뷰·DRF 라우터). "
+                        + "Flask(@app.route·블루프린트·add_url_rule·Flask-RESTful), Django(urlpatterns·include·클래스 뷰·DRF 라우터), "
+                        + "Node.js(Express·Koa·Fastify·Hono·Restify 라우터와 app.use 마운트 경로, NestJS @Controller·@Get, Next.js pages/api·app/**/route.ts). "
                         + "FastAPI 는 Depends(...)로 거는 의존 함수(인증 확인 등)를 같이 보여준다. Depends 가 없으면 인증 없이 열린 엔드포인트일 수 있다. "
-                        + "Flask·Django 는 인증 단서(login_required, permission_classes, LoginRequiredMixin, before_request 등)를 보여준다. "
+                        + "Flask·Django·Node.js 는 인증 단서(login_required, permission_classes, LoginRequiredMixin, before_request, 라우트·마운트 미들웨어, @UseGuards 등)를 보여준다. "
                         + "단서가 없어도 전역 설정(미들웨어, DEFAULT_PERMISSION_CLASSES)이 막을 수 있으니 확인한다.",
                 schema(props("repo", REPO), List.of("repo")), true, false, args -> {
             List<Node> entries = repo(args).graph().nodes(CodeNodeKind.ENTRY_POINT);
@@ -190,6 +191,8 @@ public class CodeAgentTools {
                         + "IDOR(Spring Data 저장소의 findById·deleteById 등 id 접근, 소유자 확인 누락 후보). "
                         + "Python 도 같은 분류를 쓴다(예: subprocess·os.system → COMMAND, requests·httpx → SSRF, open·FileResponse → PATH, "
                         + "문자열을 조립해 execute 에 넘김·sqlalchemy.text → SQL, pickle·yaml.load → DESERIALIZATION). "
+                        + "Node.js 도 같은 분류에 더해 NOSQL_INJECTION(요청 값을 그대로 넘긴 find·findOne 등), PROTOTYPE_POLLUTION(요청 값을 lodash merge 등으로 합침)을 쓴다 "
+                        + "(예: child_process → COMMAND, 조립한 문자열의 query·execute → SQL, axios·fetch → SSRF, fs·res.sendFile → PATH, node-serialize → DESERIALIZATION). "
                         + "프론트엔드(JS/TS/Vue/HTML) 코드의 위험 지점([프론트엔드]: XSS, CODE_INJECTION, OPEN_REDIRECT, TOKEN_STORAGE, "
                         + "POSTMESSAGE, HARDCODED_SECRET)은 HTTP 진입점 경로가 없으므로 list_sink_paths 에 나오지 않는다. "
                         + "진입점에서 닿지 않는 위험 지점도 포함한다.",
@@ -293,7 +296,7 @@ public class CodeAgentTools {
                 schema(props(
                         "repo", REPO,
                         "pattern", string("정규식 (예: @Valid|@Pattern|SecurityFilterChain, Depends\\(|shell=True)"),
-                        "file_glob", string("대상 파일 glob, 저장소 루트 기준 (기본: 저장소 언어의 소스 **.java / **.py, 예: **.yml, src/main/resources/**)")),
+                        "file_glob", string("대상 파일 glob, 저장소 루트 기준 (기본: 저장소 언어의 소스 **.java / **.py / **.{js,ts,mjs,cjs}, 예: **.yml, src/main/resources/**)")),
                         List.of("repo", "pattern")),
                 true, false, args -> {
             LoadedRepository repo = repo(args);
@@ -493,7 +496,7 @@ public class CodeAgentTools {
     /** grep_code 의 기본 대상: 저장소에서 찾은 백엔드 언어의 소스 */
     static String defaultGlob(java.util.Set<String> languages) {
         java.util.List<String> extensions = new java.util.ArrayList<>();
-        if (languages.contains("java") || !(languages.contains("python") || languages.contains("kotlin"))) {
+        if (languages.contains("java") || !(languages.contains("python") || languages.contains("kotlin") || languages.contains("node"))) {
             extensions.add("java");
         }
         if (languages.contains("kotlin")) {
@@ -501,6 +504,9 @@ public class CodeAgentTools {
         }
         if (languages.contains("python")) {
             extensions.add("py");
+        }
+        if (languages.contains("node")) {
+            extensions.addAll(List.of("js", "ts", "mjs", "cjs"));
         }
         return extensions.size() == 1 ? "**." + extensions.get(0) : "**.{" + String.join(",", extensions) + "}";
     }
@@ -519,8 +525,16 @@ public class CodeAgentTools {
                 : " · Depends: " + list.stream().map(d -> shortName(n, String.valueOf(d))).collect(Collectors.joining(", "));
     }
 
-    /** Python 이름은 마지막 두 부분 (app.routers.scan.run_nmap → scan.run_nmap, app.repo.UserRepo.delete → UserRepo.delete) */
+    /**
+     * Python 이름은 마지막 두 부분 (app.routers.scan.run_nmap → scan.run_nmap, app.repo.UserRepo.delete → UserRepo.delete),
+     * Node 이름은 파일 이름부터 (src/routes/products.js#GET /search → products.js#GET /search)
+     */
     static String shortName(Node n, String qualifiedName) {
+        if (qualifiedName != null && "node".equals(n.prop("language"))) {
+            int hash = qualifiedName.indexOf('#');
+            String file = hash < 0 ? qualifiedName : qualifiedName.substring(0, hash);
+            return file.substring(file.lastIndexOf('/') + 1) + (hash < 0 ? "" : qualifiedName.substring(hash));
+        }
         if (qualifiedName == null || !"python".equals(n.prop("language"))) {
             return shortName(qualifiedName);
         }
