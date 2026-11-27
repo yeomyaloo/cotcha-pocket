@@ -20,8 +20,9 @@ public record ToolDef(String name, String title, String description, Map<String,
         Map<String, Object> checkedSchema = inputSchema;
         String toolName = name;
         handler = args -> {
-            ToolArgsCheck.validate(toolName, checkedSchema, args);
-            return original.apply(args);
+            Args fixed = new Args(ToolArgsCheck.normalize(checkedSchema, args.values()));
+            ToolArgsCheck.validate(toolName, checkedSchema, fixed);
+            return original.apply(fixed);
         };
     }
 

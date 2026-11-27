@@ -15,6 +15,29 @@ final class ToolArgsCheck {
     private ToolArgsCheck() {
     }
 
+    /**
+     * 에이전트가 자주 쓰는 다른 이름 → 스키마의 이름. 블라인드 실행 9번 중 3번이 submit_verdict 에 reasoning 대신 reason 을 넣었다.
+     * 스키마에 원래 이름이 있고, 다른 이름은 없고, 원래 이름을 따로 주지 않았을 때만 옮긴다.
+     */
+    private static final Map<String, String> ALIASES = Map.of("reason", "reasoning", "rationale", "reasoning");
+
+    /** 다른 이름으로 준 인자를 스키마의 이름으로 바꾼 값 (바꿀 것이 없으면 그대로) */
+    static Map<String, Object> normalize(Map<String, Object> schema, Map<String, Object> values) {
+        Map<String, Map<String, Object>> properties = properties(schema);
+        Map<String, Object> result = null;
+        for (Map.Entry<String, String> alias : ALIASES.entrySet()) {
+            String from = alias.getKey();
+            String to = alias.getValue();
+            if (values.containsKey(from) && !properties.containsKey(from) && properties.containsKey(to) && values.get(to) == null) {
+                if (result == null) {
+                    result = new java.util.LinkedHashMap<>(values);
+                }
+                result.put(to, result.remove(from));
+            }
+        }
+        return result == null ? values : result;
+    }
+
     /** 문제가 있으면 ToolException (고칠 점 목록 + 이 도구의 인자 안내) */
     static void validate(String tool, Map<String, Object> schema, Args args) {
         List<String> problems = new ArrayList<>();
