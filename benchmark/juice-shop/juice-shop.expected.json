@@ -1,0 +1,423 @@
+{
+  "name": "juice-shop",
+  "description": "OWASP Juice Shop (master c9f9922). 정답은 소스의 vuln-code-snippet 표시에서 뽑았다 (코드 밖 IaC·web3·보안 질문 항목은 뺐다). 함정은 없다.",
+  "vulnerabilities": [
+    {
+      "id": "sqli-login",
+      "category": "SQL",
+      "cwe": [
+        "CWE-89"
+      ],
+      "file": "routes/login.ts",
+      "lines": [
+        31,
+        37
+      ],
+      "sinkLine": 34,
+      "entryPoint": null,
+      "why": "로그인 쿼리에 email 을 문자열로 넣는다 (loginAdmin·loginBender·loginJim)",
+      "tier": "core"
+    },
+    {
+      "id": "sqli-search",
+      "category": "SQL",
+      "cwe": [
+        "CWE-89"
+      ],
+      "file": "routes/search.ts",
+      "lines": [
+        20,
+        26
+      ],
+      "sinkLine": 23,
+      "entryPoint": null,
+      "why": "검색어를 문자열로 넣은 쿼리 (unionSqlInjection·dbSchema)",
+      "tier": "core"
+    },
+    {
+      "id": "nosql-reviews",
+      "category": "NOSQL_INJECTION",
+      "cwe": [
+        "CWE-943",
+        "CWE-89"
+      ],
+      "file": "routes/updateProductReviews.ts",
+      "lines": [
+        17,
+        21
+      ],
+      "sinkLine": 18,
+      "entryPoint": null,
+      "why": "리뷰 수정의 _id 에 요청 값을 그대로 넣고 multi: true (noSqlReviews)",
+      "tier": "core"
+    },
+    {
+      "id": "forged-review",
+      "category": "IDOR",
+      "cwe": [
+        "CWE-639",
+        "CWE-284",
+        "CWE-285",
+        "CWE-862",
+        "CWE-863",
+        "CWE-345"
+      ],
+      "file": "routes/updateProductReviews.ts",
+      "lines": [
+        15,
+        19
+      ],
+      "sinkLine": 16,
+      "entryPoint": null,
+      "why": "작성자 확인 없이 남의 리뷰를 고친다 (forgedReview)",
+      "tier": "core"
+    },
+    {
+      "id": "xss-restful",
+      "category": "XSS",
+      "cwe": [
+        "CWE-79",
+        "CWE-80"
+      ],
+      "file": "frontend/src/app/search-result/search-result.component.ts",
+      "lines": [
+        110,
+        116
+      ],
+      "sinkLine": 113,
+      "entryPoint": null,
+      "why": "상품 설명을 bypassSecurityTrustHtml (restfulXss)",
+      "tier": "core"
+    },
+    {
+      "id": "xss-local",
+      "category": "XSS",
+      "cwe": [
+        "CWE-79",
+        "CWE-80"
+      ],
+      "file": "frontend/src/app/search-result/search-result.component.ts",
+      "lines": [
+        143,
+        149
+      ],
+      "sinkLine": 146,
+      "entryPoint": null,
+      "why": "검색어 쿼리 파라미터를 bypassSecurityTrustHtml (localXss·xssBonus)",
+      "tier": "core"
+    },
+    {
+      "id": "redirect-bypass",
+      "category": "OPEN_REDIRECT",
+      "cwe": [
+        "CWE-601"
+      ],
+      "file": "lib/insecurity.ts",
+      "lines": [
+        130,
+        140
+      ],
+      "sinkLine": 136,
+      "entryPoint": null,
+      "why": "허용 목록을 includes 로 확인해서 다른 URL 에 끼워 넣으면 통과한다 (redirect)",
+      "tier": "core"
+    },
+    {
+      "id": "redirect-outdated",
+      "category": "OPEN_REDIRECT",
+      "cwe": [
+        "CWE-601",
+        "CWE-1104",
+        "CWE-200"
+      ],
+      "file": "lib/insecurity.ts",
+      "lines": [
+        121,
+        127
+      ],
+      "sinkLine": 124,
+      "entryPoint": null,
+      "why": "허용 목록에 더는 쓰지 않는 암호화폐 주소가 남아 있다 (redirectCryptoCurrency)",
+      "tier": "core"
+    },
+    {
+      "id": "weak-password-hash",
+      "category": "WEAK_CRYPTO",
+      "cwe": [
+        "CWE-916",
+        "CWE-328",
+        "CWE-327",
+        "CWE-759",
+        "CWE-521"
+      ],
+      "file": "models/user.ts",
+      "lines": [
+        70,
+        76
+      ],
+      "sinkLine": 73,
+      "entryPoint": null,
+      "why": "비밀번호를 솔트 없는 MD5 로 저장한다 (weakPassword)",
+      "tier": "core"
+    },
+    {
+      "id": "chatbot-coupon",
+      "category": "CODE_INJECTION",
+      "cwe": [
+        "CWE-1427",
+        "CWE-20",
+        "CWE-840",
+        "CWE-284",
+        "CWE-639",
+        "CWE-77"
+      ],
+      "file": "routes/chat.ts",
+      "lines": [
+        176,
+        188
+      ],
+      "sinkLine": 185,
+      "entryPoint": null,
+      "why": "챗봇 도구가 할인율 상한을 서버에서 확인하지 않아 프롬프트 주입으로 큰 쿠폰을 만든다 (chatbotPromptInjection·chatbotGreedyInjection)",
+      "tier": "core"
+    },
+    {
+      "id": "passkey-overwrite",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-287",
+        "CWE-639",
+        "CWE-284",
+        "CWE-862",
+        "CWE-345",
+        "CWE-863"
+      ],
+      "file": "routes/passkey.ts",
+      "lines": [
+        136,
+        146
+      ],
+      "sinkLine": 142,
+      "entryPoint": null,
+      "why": "남의 passkey 공개키를 덮어쓸 수 있다 (passkeyCredentialOverwrite)",
+      "tier": "core"
+    },
+    {
+      "id": "passkey-signature",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-347",
+        "CWE-287",
+        "CWE-345",
+        "CWE-290"
+      ],
+      "file": "routes/passkey.ts",
+      "lines": [
+        176,
+        225
+      ],
+      "sinkLine": 222,
+      "entryPoint": null,
+      "why": "passkey 서명을 확인하지 않고 세션을 준다 (passkeySignature)",
+      "tier": "core"
+    },
+    {
+      "id": "directory-listing",
+      "category": "PATH",
+      "cwe": [
+        "CWE-548",
+        "CWE-22",
+        "CWE-538",
+        "CWE-200",
+        "CWE-552"
+      ],
+      "file": "server.ts",
+      "lines": [
+        292,
+        296
+      ],
+      "sinkLine": 294,
+      "entryPoint": null,
+      "why": "/ftp 디렉터리 목록과 파일을 그대로 연다 (directoryListing)",
+      "tier": "core"
+    },
+    {
+      "id": "access-logs",
+      "category": "PATH",
+      "cwe": [
+        "CWE-532",
+        "CWE-548",
+        "CWE-200",
+        "CWE-538",
+        "CWE-552"
+      ],
+      "file": "server.ts",
+      "lines": [
+        304,
+        309
+      ],
+      "sinkLine": 306,
+      "entryPoint": null,
+      "why": "/support/logs 로 접근 로그 목록과 파일을 연다 (accessLogDisclosure)",
+      "tier": "core"
+    },
+    {
+      "id": "rate-limit-bypass",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-307",
+        "CWE-348",
+        "CWE-799",
+        "CWE-770",
+        "CWE-290"
+      ],
+      "file": "server.ts",
+      "lines": [
+        374,
+        380
+      ],
+      "sinkLine": 378,
+      "entryPoint": null,
+      "why": "비밀번호 재설정 횟수 제한 키가 X-Forwarded-For 라서 헤더만 바꾸면 무한 시도 (resetPasswordMorty)",
+      "tier": "core"
+    },
+    {
+      "id": "change-product-authz",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-862",
+        "CWE-285",
+        "CWE-284",
+        "CWE-306",
+        "CWE-863"
+      ],
+      "file": "server.ts",
+      "lines": [
+        382,
+        410
+      ],
+      "sinkLine": 402,
+      "entryPoint": null,
+      "why": "상품 수정 API 의 권한 검사가 주석 처리되어 있다 (changeProduct)",
+      "tier": "core"
+    },
+    {
+      "id": "register-admin",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-915",
+        "CWE-269",
+        "CWE-284",
+        "CWE-639",
+        "CWE-20"
+      ],
+      "file": "server.ts",
+      "lines": [
+        546,
+        556
+      ],
+      "sinkLine": 550,
+      "entryPoint": null,
+      "why": "회원 가입 요청의 role 을 그대로 받아 관리자로 가입한다 (registerAdmin)",
+      "tier": "core"
+    },
+    {
+      "id": "exposed-metrics",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-200",
+        "CWE-284",
+        "CWE-306",
+        "CWE-862",
+        "CWE-497"
+      ],
+      "file": "server.ts",
+      "lines": [
+        768,
+        772
+      ],
+      "sinkLine": 771,
+      "entryPoint": null,
+      "why": "/metrics 를 인증 없이 연다 (exposedMetrics)",
+      "tier": "core"
+    },
+    {
+      "id": "admin-section",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-284",
+        "CWE-425",
+        "CWE-602",
+        "CWE-862",
+        "CWE-285"
+      ],
+      "file": "frontend/src/app/app.routing.ts",
+      "lines": [
+        77,
+        84
+      ],
+      "sinkLine": 80,
+      "entryPoint": null,
+      "why": "관리 화면 라우트가 클라이언트에서만 숨겨져 있다 (adminSection)",
+      "tier": "obscurity"
+    },
+    {
+      "id": "score-board",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-425",
+        "CWE-200",
+        "CWE-284",
+        "CWE-656"
+      ],
+      "file": "frontend/src/app/app.routing.ts",
+      "lines": [
+        184,
+        190
+      ],
+      "sinkLine": 187,
+      "entryPoint": null,
+      "why": "숨겨 둔 점수판 라우트 (scoreBoard)",
+      "tier": "obscurity"
+    },
+    {
+      "id": "web3-sandbox",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-425",
+        "CWE-200",
+        "CWE-284",
+        "CWE-656"
+      ],
+      "file": "frontend/src/app/app.routing.ts",
+      "lines": [
+        242,
+        248
+      ],
+      "sinkLine": 245,
+      "entryPoint": null,
+      "why": "숨겨 둔 web3 샌드박스 라우트 (web3Sandbox)",
+      "tier": "obscurity"
+    },
+    {
+      "id": "token-sale",
+      "category": "MISSING_AUTH",
+      "cwe": [
+        "CWE-425",
+        "CWE-200",
+        "CWE-284",
+        "CWE-656"
+      ],
+      "file": "frontend/src/app/app.routing.ts",
+      "lines": [
+        260,
+        310
+      ],
+      "sinkLine": 267,
+      "entryPoint": null,
+      "why": "난독화한 매처로 숨긴 토큰 판매 라우트 (tokenSale)",
+      "tier": "obscurity"
+    }
+  ],
+  "safe": []
+}

@@ -61,6 +61,25 @@ Three blind runs (plugin 0.24.0, cotcha-trail 0.21.0), same instructions as the 
 
 Three blind runs (plugin 0.25.0, cotcha-trail 0.22.0), same instructions as the other apps. Recall 100%, 100%, 100%. Precision 100%. Trap false positives 0/8 in every run. All 11 findings confirmed in each run, the same outcome for 19/19 items, mean Jaccard 1.00. Every run told `FromSqlRaw` (vulnerable) apart from `FromSqlInterpolated` (parameterized), flagged JSON.NET only because of `TypeNameHandling.Auto` and `XmlDocument` only because of `XmlUrlResolver`, and followed the search query through the repository interface injected by the primary constructor. All three also noticed that the JWT setup skips issuer and audience checks and chose not to report it, since the signing key is still validated.
 
+## Results: OWASP Juice Shop (real-world, blind)
+
+A real application, not one written for this benchmark. [`juice-shop/prepare.py`](juice-shop/prepare.py) makes a blind copy of [OWASP Juice Shop](https://github.com/juice-shop/juice-shop) (commit `c9f9922`). Juice Shop marks its vulnerable lines with `vuln-code-snippet` comments; the script blanks those comments (line numbers unchanged) and removes the challenge list, solutions, code-fix explanations, tests and AI-assistant folders. [`juice-shop/juice-shop.expected.json`](juice-shop/juice-shop.expected.json) is built from the same markers: 18 code items (SQL/NoSQL injection, XSS, redirects, missing authorization, passkeys, rate limiting, mass assignment…) and 4 frontend hidden-route items. IaC, web3 and security-question items are left out. There are no traps, so precision against the key means little: Juice Shop has many more real vulnerabilities than its markers.
+
+Running the engine on it first exposed gaps the small apps never hit, fixed in cotcha-trail 0.23.0: handler factories (`app.post('/login', login())`), path-scoped `app.use` middleware as guards, infrastructure middleware out of guards, NoSQL `update`. Entry points went from 17 to 99.
+
+Three blind runs (plugin 0.25.1), each ~220k tokens and ~18 minutes, 58–64 confirmed findings each:
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Code items found (18) | 16 | 16 | 14 |
+| Hidden-route items (4) | 0 | 0 | 0 |
+| Recall against the key as written | 64% | 64% | 55% |
+
+- The scorer's numbers are lower than the "found" row because the key points the MD5 password hash at its caller (`models/user.ts:73`) and the admin registration at `server.ts:550`, while the runs reported the hash function (`lib/insecurity.ts:41`) and the mass-assignment line nearby. With those two ranges widened, the runs score 73%, 73% and 59%.
+- Missed in every run: the outdated crypto-address entries in the redirect allow-list (a stale-config issue) and `/metrics` exposed without authentication. Run 3 also missed both passkey flaws. No run reported the four frontend hidden routes (they are security through obscurity, not code flaws).
+- Beyond the key, each run reported about 45 more issues, almost all real Juice Shop vulnerabilities: `eval` of the username, JWT `alg: none` / key confusion, hardcoded RSA key, XXE, Zip Slip, YAML deserialization, SSRF, basket and address IDOR, `$where` NoSQL injection, null-byte file bypass, free deluxe upgrade, password change without the old password, stored and DOM XSS, CSRF.
+- Engine gaps the runs pointed out: finale-rest's generated `/api/*` routes and `app.use('/ftp', serveIndex(...))`-style static routes are not listed as entry points; the runs covered them by reading `server.ts`.
+
 ---
 
 # 벤치마크
@@ -124,3 +143,22 @@ node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.
 ## 결과: cs-shop (블라인드)
 
 다른 앱과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.25.0, cotcha-trail 0.22.0). 재현율 100%, 100%, 100%. 정밀도 100%. 함정 오탐은 매번 0/8. 실행마다 발견 11개를 모두 확정했고, 19개 항목 모두 세 번 같은 결론, 평균 자카드 1.00. 세 번 모두 `FromSqlRaw`(취약)와 `FromSqlInterpolated`(매개변수화)를 구분했고, JSON.NET 은 `TypeNameHandling.Auto` 때문에, `XmlDocument` 는 `XmlUrlResolver` 때문에만 취약하다고 봤으며, 기본 생성자로 주입한 저장소 인터페이스를 거쳐 검색어를 따라갔다. 세 번 모두 JWT 설정이 발급자·대상 검사를 끈 것도 봤지만, 서명 키는 검사하므로 보고하지 않았다.
+
+## 결과: OWASP Juice Shop (실제 앱, 블라인드)
+
+이 벤치마크용으로 만든 앱이 아니라 실제 앱이다. [`juice-shop/prepare.py`](juice-shop/prepare.py) 가 [OWASP Juice Shop](https://github.com/juice-shop/juice-shop)(커밋 `c9f9922`)의 블라인드 사본을 만든다. Juice Shop 은 취약한 줄에 `vuln-code-snippet` 주석을 달아 두는데, 스크립트가 그 주석을 줄 번호 그대로 지우고 문제 목록·풀이·코드 수정 해설·테스트·AI 도구 폴더를 뺀다. [`juice-shop/juice-shop.expected.json`](juice-shop/juice-shop.expected.json) 은 같은 주석에서 뽑았다: 코드 항목 18개(SQL·NoSQL 주입, XSS, 리다이렉트, 권한 누락, passkey, 횟수 제한, 대량 할당…)와 프런트 숨긴 라우트 4개. IaC·web3·보안 질문 항목은 뺐다. 함정이 없어서 정답 기준 정밀도는 의미가 적다: Juice Shop 에는 표시된 것보다 훨씬 많은 진짜 취약점이 있다.
+
+엔진을 먼저 돌려 보니 작은 앱에서는 안 나오던 빈틈이 드러나서 cotcha-trail 0.23.0 에서 고쳤다: 처리기를 만드는 함수(`app.post('/login', login())`), 경로를 준 `app.use` 미들웨어를 guards 로, 기반 미들웨어는 guards 에서 뺌, NoSQL `update`. 진입점이 17개에서 99개로 늘었다.
+
+블라인드 3번(플러그인 0.25.1), 실행마다 약 22만 토큰·18분, 확정 발견 58~64개:
+
+| | 1번 | 2번 | 3번 |
+|---|---|---|---|
+| 코드 항목 찾음 (18개) | 16 | 16 | 14 |
+| 숨긴 라우트 항목 (4개) | 0 | 0 | 0 |
+| 정답 그대로 채점한 재현율 | 64% | 64% | 55% |
+
+- 채점 숫자가 "찾음" 줄보다 낮은 건, 정답이 MD5 비밀번호 해시를 호출하는 줄(`models/user.ts:73`)에, 관리자 가입을 `server.ts:550` 에 두었는데 실행들은 해시 함수(`lib/insecurity.ts:41`)와 근처의 대량 할당 줄에 보고했기 때문이다. 이 두 범위를 넓히면 73%, 73%, 59% 다.
+- 세 번 모두 놓친 것: 리다이렉트 허용 목록에 남은 옛 암호화폐 주소(오래된 설정 문제)와 인증 없이 열린 `/metrics`. 3번은 passkey 문제 두 개도 놓쳤다. 숨긴 프런트 라우트 4개는 어느 실행도 보고하지 않았다(코드 결함이 아니라 숨겨서 지키는 방식이다).
+- 정답 밖으로 실행마다 45개쯤 더 보고했고 거의 모두 Juice Shop 의 진짜 취약점이다: 사용자 이름 `eval`, JWT `alg: none`·키 혼동, 하드코딩한 RSA 키, XXE, Zip Slip, YAML 역직렬화, SSRF, 장바구니·주소 IDOR, `$where` NoSQL 주입, 널 바이트 파일 우회, 무료 디럭스 등급, 기존 비밀번호 없는 비밀번호 변경, 저장형·DOM XSS, CSRF.
+- 실행들이 짚은 엔진 빈틈: finale-rest 가 만드는 `/api/*` 라우트와 `app.use('/ftp', serveIndex(...))` 같은 정적 경로가 진입점 목록에 없다. 실행들은 `server.ts` 를 직접 읽어 다뤘다.
