@@ -56,6 +56,15 @@ class EntryHintsTest {
         assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("php"))).isEqualTo("**.php");
     }
 
+    @Test
+    void Ruby_처리기는_클래스_이름부터_보여주고_grep_기본_대상은_rb_다() {
+        Node node = entry(Map.of("language", "ruby"));
+        assertThat(CodeAgentTools.shortName(node, "Api::Admin::ToolsController#export")).isEqualTo("ToolsController#export");
+        assertThat(CodeAgentTools.shortName(node, "sinatra/app.rb#GET /fetch")).isEqualTo("app.rb#GET /fetch");
+        assertThat(CodeAgentTools.shortName(node, "ProductRepository#search")).isEqualTo("ProductRepository#search");
+        assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("ruby"))).isEqualTo("**.rb");
+    }
+
     private static Node entry(Map<String, Object> props) {
         return new Node(1, CodeNodeKind.ENTRY_POINT, "GET /x -> h", "a.py", 1, props);
     }

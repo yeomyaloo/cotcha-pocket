@@ -4,12 +4,12 @@
     "name": "hwiju yeom",
     "url": "https://github.com/yeomyaloo"
   },
-  "description": "Cotcha: AI code security audit agent for Java/Spring, Kotlin, Python (FastAPI, Flask, Django) , Node.js (Express, NestJS, Next.js) , Go (gin, echo, chi, net/http) and PHP (Laravel, Symfony, Slim) (MCP server + skill)",
+  "description": "Cotcha: AI code security audit agent for Java/Spring, Kotlin, Python (FastAPI, Flask, Django) , Node.js (Express, NestJS, Next.js) , Go (gin, echo, chi, net/http) , PHP (Laravel, Symfony, Slim) and Ruby (Rails, Sinatra) (MCP server + skill)",
   "plugins": [
     {
       "name": "cotcha",
       "source": "./",
-      "description": "Audit Java/Spring, Kotlin, Python (FastAPI, Flask, Django) , Node.js (Express, NestJS, Next.js) , Go (gin, echo, chi, net/http) and PHP (Laravel, Symfony, Slim) source code for security vulnerabilities in chat (code graph, findings, verification, SARIF reports). Requires Java 17+."
+      "description": "Audit Java/Spring, Kotlin, Python (FastAPI, Flask, Django) , Node.js (Express, NestJS, Next.js) , Go (gin, echo, chi, net/http) , PHP (Laravel, Symfony, Slim) and Ruby (Rails, Sinatra) source code for security vulnerabilities in chat (code graph, findings, verification, SARIF reports). Requires Java 17+."
     }
   ]
 }

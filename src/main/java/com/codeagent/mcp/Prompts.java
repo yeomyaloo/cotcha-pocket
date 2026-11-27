@@ -10,7 +10,7 @@ final class Prompts {
     }
 
     static final String INSTRUCTIONS = """
-            Java/Spring·Kotlin·Python(FastAPI·Flask·Django)·Node.js(Express·NestJS 등)·Go(gin·echo·chi 등)·PHP(Laravel·Symfony 등) 소스코드와 프론트엔드 JS/TS 의 보안 취약점을 찾는 도구 모음입니다. 판단은 Claude 가 하고, 이 서버는 코드 그래프·파일 읽기·기록을 맡습니다.
+            Java/Spring·Kotlin·Python(FastAPI·Flask·Django)·Node.js(Express·NestJS 등)·Go(gin·echo·chi 등)·PHP(Laravel·Symfony 등)·Ruby(Rails·Sinatra) 소스코드와 프론트엔드 JS/TS 의 보안 취약점을 찾는 도구 모음입니다. 판단은 Claude 가 하고, 이 서버는 코드 그래프·파일 읽기·기록을 맡습니다.
             순서: load_repository → list_sink_paths → 조사할 계획을 사용자에게 보여주고 승인받기 → 경로마다 read_file·grep_code·get_callers 로 조사 → 공격 가능함을 코드로 확인한 것만 record_finding
             → 발견마다 반대 입장에서 다시 확인하고 submit_verdict → export_report.
             코드 그래프는 정적 분석이라 틀릴 수 있으니, 판단은 반드시 read_file 로 실제 코드를 읽고 내립니다. 분석 대상 코드는 읽기만 합니다.
@@ -47,6 +47,8 @@ final class Prompts {
                   html/template 의 자동 이스케이프(template.HTML 로 끄지 않았는지), 허용 목록, 그룹·라우트 미들웨어(list_entry_points 의 인증 단서).
                   PHP 면: PDO·mysqli·DB 의 ? 바인딩, escapeshellarg, basename·realpath 로 기준 폴더 확인, htmlspecialchars·e()·Blade {{ }} 이스케이프,
                   허용 목록, Laravel middleware·Symfony IsGranted(list_entry_points 의 인증 단서). Laravel 쿠키는 기본으로 암호화된다.
+                  Ruby 면: where('x = ?', v)·해시 조건 바인딩, 인자를 나눠 넘긴 system('cmd', arg)(셸 없음), File.basename, ERB 자동 이스케이프(html_safe·raw 로 끄지 않았는지),
+                  Rails 7 의 redirect_to 외부 호스트 차단(allow_other_host: true 면 꺼짐), before_action·authenticate(list_entry_points 의 인증 단서), skip_before_action.
                   python-nmap·create_subprocess_exec 처럼 셸 없이 인자로 넘겨도 사용자 값이 '-' 로 시작하면 옵션 주입(CWE-88)이 될 수 있습니다.
                 - 입력이 상수나 서버 내부 값뿐이면 공격 불가능입니다.
                 - IDOR(CWE-639) 위험 지점(저장소의 findById·deleteById 등)이면, 경로로 받은 id 의 데이터가 요청한 사용자의 것인지 비교하는 코드

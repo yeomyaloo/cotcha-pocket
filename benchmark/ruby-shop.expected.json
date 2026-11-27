@@ -1,0 +1,265 @@
+{
+  "name": "ruby-shop",
+  "description": "Ruby(Rails) 쇼핑몰 API 예제. 요청 값이 위험 호출까지 가는 취약점 11개와, 위험 호출처럼 보이지만 안전한 함정 7개. 정답은 분석 대상 폴더 밖에 둔다.",
+  "vulnerabilities": [
+    {
+      "id": "sql-search",
+      "category": "SQL",
+      "cwe": [
+        "CWE-89"
+      ],
+      "file": "app/repositories/product_repository.rb",
+      "lines": [
+        12,
+        14
+      ],
+      "sinkLine": 13,
+      "entryPoint": "GET /api/products/search",
+      "why": "검색어를 문자열 보간으로 where 조건에 넣는다"
+    },
+    {
+      "id": "path-image",
+      "category": "PATH",
+      "cwe": [
+        "CWE-22",
+        "CWE-23",
+        "CWE-73"
+      ],
+      "file": "app/controllers/api/images_controller.rb",
+      "lines": [
+        5,
+        7
+      ],
+      "sinkLine": 6,
+      "entryPoint": "GET /api/images",
+      "why": "file 값을 Rails.root.join 으로 붙여 ../ 로 이미지 폴더 밖 파일을 보낸다"
+    },
+    {
+      "id": "weak-hash-password",
+      "category": "WEAK_CRYPTO",
+      "cwe": [
+        "CWE-327",
+        "CWE-328",
+        "CWE-759",
+        "CWE-916"
+      ],
+      "file": "app/models/user.rb",
+      "lines": [
+        4,
+        10
+      ],
+      "sinkLine": 7,
+      "entryPoint": "POST /api/auth/login",
+      "why": "비밀번호를 솔트 없는 MD5 로 저장·비교한다"
+    },
+    {
+      "id": "weak-random-reset",
+      "category": "WEAK_RANDOM",
+      "cwe": [
+        "CWE-330",
+        "CWE-338",
+        "CWE-340"
+      ],
+      "file": "app/controllers/api/sessions_controller.rb",
+      "lines": [
+        15,
+        19
+      ],
+      "sinkLine": 16,
+      "entryPoint": "POST /api/auth/reset",
+      "why": "비밀번호 재설정 토큰을 Kernel#rand 로 만든다"
+    },
+    {
+      "id": "redirect-logout",
+      "category": "OPEN_REDIRECT",
+      "cwe": [
+        "CWE-601"
+      ],
+      "file": "app/controllers/api/sessions_controller.rb",
+      "lines": [
+        21,
+        23
+      ],
+      "sinkLine": 22,
+      "entryPoint": "GET /api/auth/logout",
+      "why": "next 파라미터로 allow_other_host: true 리다이렉트를 해서 외부 주소로 보낸다"
+    },
+    {
+      "id": "xss-search-page",
+      "category": "XSS",
+      "cwe": [
+        "CWE-79",
+        "CWE-80"
+      ],
+      "file": "app/controllers/api/pages_controller.rb",
+      "lines": [
+        7,
+        9
+      ],
+      "sinkLine": 8,
+      "entryPoint": "GET /api/search",
+      "why": "검색어를 이스케이프하지 않은 문자열에 html_safe 를 붙여 HTML 로 돌려준다"
+    },
+    {
+      "id": "ssrf-avatar",
+      "category": "SSRF",
+      "cwe": [
+        "CWE-918"
+      ],
+      "file": "app/controllers/api/accounts_controller.rb",
+      "lines": [
+        6,
+        12
+      ],
+      "sinkLine": 7,
+      "entryPoint": "POST /api/account/avatar",
+      "why": "사용자가 준 URL 로 서버가 요청을 보낸다"
+    },
+    {
+      "id": "deser-cart",
+      "category": "DESERIALIZATION",
+      "cwe": [
+        "CWE-502"
+      ],
+      "file": "app/controllers/api/accounts_controller.rb",
+      "lines": [
+        14,
+        17
+      ],
+      "sinkLine": 15,
+      "entryPoint": "POST /api/account/cart",
+      "why": "요청 값을 Marshal.load 해서 객체 주입(가젯 체인)이 가능하다"
+    },
+    {
+      "id": "open-pipe-import",
+      "category": "COMMAND",
+      "cwe": [
+        "CWE-78",
+        "CWE-77",
+        "CWE-22",
+        "CWE-73",
+        "CWE-918"
+      ],
+      "file": "app/controllers/api/accounts_controller.rb",
+      "lines": [
+        19,
+        23
+      ],
+      "sinkLine": 20,
+      "entryPoint": "POST /api/account/import",
+      "why": "Kernel#open 에 요청 값을 넘겨서 '|명령' 으로 셸 명령을 실행할 수 있다 (파일·URL 도 읽힌다)"
+    },
+    {
+      "id": "command-export",
+      "category": "COMMAND",
+      "cwe": [
+        "CWE-78",
+        "CWE-77"
+      ],
+      "file": "app/controllers/api/admin/tools_controller.rb",
+      "lines": [
+        10,
+        15
+      ],
+      "sinkLine": 11,
+      "entryPoint": "POST /api/admin/export",
+      "why": "dir 값을 셸 명령 문자열에 넣는다 (관리자만 가능하지만 셸 명령 주입)"
+    },
+    {
+      "id": "ssti-preview",
+      "category": "CODE_INJECTION",
+      "cwe": [
+        "CWE-1336",
+        "CWE-94",
+        "CWE-95"
+      ],
+      "file": "app/controllers/api/admin/tools_controller.rb",
+      "lines": [
+        25,
+        28
+      ],
+      "sinkLine": 26,
+      "entryPoint": "POST /api/admin/templates/preview",
+      "why": "요청의 template 을 ERB 로 실행한다 (관리자만 가능하지만 서버 코드 실행)"
+    }
+  ],
+  "safe": [
+    {
+      "id": "sql-sort-allowlist",
+      "category": "SQL",
+      "file": "app/repositories/product_repository.rb",
+      "lines": [
+        8,
+        10
+      ],
+      "sinkLine": 9,
+      "why": "정렬 컬럼을 상수 해시에서만 고른다"
+    },
+    {
+      "id": "sha1-etag",
+      "category": "WEAK_CRYPTO",
+      "file": "app/controllers/api/products_controller.rb",
+      "lines": [
+        7,
+        11
+      ],
+      "sinkLine": 9,
+      "why": "SHA-1 을 보안이 아닌 ETag 계산에만 쓴다"
+    },
+    {
+      "id": "path-thumb-basename",
+      "category": "PATH",
+      "file": "app/controllers/api/images_controller.rb",
+      "lines": [
+        9,
+        12
+      ],
+      "sinkLine": 11,
+      "why": "File.basename 으로 디렉터리를 떼서 썸네일 폴더 밖으로 못 나간다"
+    },
+    {
+      "id": "redirect-allowlist",
+      "category": "OPEN_REDIRECT",
+      "file": "app/controllers/api/sessions_controller.rb",
+      "lines": [
+        25,
+        28
+      ],
+      "sinkLine": 27,
+      "why": "허용 목록에 있는 내부 경로로만 리다이렉트한다"
+    },
+    {
+      "id": "xss-escaped",
+      "category": "XSS",
+      "file": "app/controllers/api/pages_controller.rb",
+      "lines": [
+        11,
+        13
+      ],
+      "sinkLine": 12,
+      "why": "ERB::Util.html_escape 로 이스케이프한 뒤 html_safe 를 붙인다"
+    },
+    {
+      "id": "random-pick",
+      "category": "WEAK_RANDOM",
+      "file": "app/controllers/api/pages_controller.rb",
+      "lines": [
+        15,
+        17
+      ],
+      "sinkLine": 16,
+      "why": "추천 항목 고르기에만 쓴다 (보안과 무관)"
+    },
+    {
+      "id": "ssrf-payment-fixed-host",
+      "category": "SSRF",
+      "file": "app/services/payment_client.rb",
+      "lines": [
+        5,
+        8
+      ],
+      "sinkLine": 6,
+      "why": "호스트는 환경 변수 값이고 결제 id 는 DB 값을 url_encode 한다"
+    }
+  ]
+}
