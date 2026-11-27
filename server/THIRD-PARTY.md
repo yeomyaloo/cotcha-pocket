@@ -7,7 +7,7 @@
 | Library | License |
 |---|---|
 | cotcha-trail (shared code graph engine) | Apache-2.0 |
-| tree-sitter-ng (`tree-sitter`, `tree-sitter-python`, bundled native libraries) | MIT |
+| tree-sitter-ng (`tree-sitter`, `tree-sitter-python`, `tree-sitter-kotlin`, `tree-sitter-javascript`, `tree-sitter-typescript`, bundled native libraries) | MIT |
 | MCP Java SDK (`mcp`, `mcp-core`, `mcp-json-jackson3`) | MIT |
 | JavaParser (`javaparser-core`, `javaparser-symbol-solver-core`) | Apache-2.0 / LGPL-3.0 (dual) |
 | Javassist | Apache-2.0 / MPL-1.1 / LGPL-2.1 (tri) |
