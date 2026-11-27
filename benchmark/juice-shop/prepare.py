@@ -26,12 +26,19 @@ MARKER_LINE = re.compile(r'\s*(//|#)\s*vuln-code-snippet.*$')
 MARKER_BLOCK = re.compile(r'/\*\s*vuln-code-snippet.*?\*/|<!--\s*vuln-code-snippet.*?-->')
 
 
+def long_path(path):
+    """Windows 는 260자가 넘는 경로를 그냥 다루지 못한다 (프런트엔드 깊은 폴더). \\\\?\\ 를 붙여 긴 경로로 다룬다."""
+    path = os.path.abspath(path)
+    return '\\\\?\\' + path if os.name == 'nt' and not path.startswith('\\\\?\\') else path
+
+
 def main(source, target):
+    source, target = long_path(source), long_path(target)
     if os.path.exists(target):
         shutil.rmtree(target)
     shutil.copytree(source, target, ignore=shutil.ignore_patterns('.git', 'node_modules'))
     for rel in REMOVE:
-        path = os.path.join(target, rel)
+        path = os.path.join(target, os.path.normpath(rel))
         if os.path.isdir(path):
             shutil.rmtree(path)
         elif os.path.exists(path):
