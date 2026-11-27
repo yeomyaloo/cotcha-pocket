@@ -65,6 +65,14 @@ class EntryHintsTest {
         assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("ruby"))).isEqualTo("**.rb");
     }
 
+    @Test
+    void CSharp_처리기는_클래스나_파일_이름부터_보여주고_grep_기본_대상은_cs_다() {
+        Node node = entry(Map.of("language", "csharp"));
+        assertThat(CodeAgentTools.shortName(node, "CsShop.Controllers.AuthController#Login")).isEqualTo("AuthController#Login");
+        assertThat(CodeAgentTools.shortName(node, "src/Api/Program.cs#GET /health")).isEqualTo("Program.cs#GET /health");
+        assertThat(CodeAgentTools.defaultGlob(java.util.Set.of("csharp"))).isEqualTo("**.cs");
+    }
+
     private static Node entry(Map<String, Object> props) {
         return new Node(1, CodeNodeKind.ENTRY_POINT, "GET /x -> h", "a.py", 1, props);
     }

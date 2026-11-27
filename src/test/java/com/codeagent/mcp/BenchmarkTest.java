@@ -45,7 +45,7 @@ class BenchmarkTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"shop-app", "node-shop", "go-shop", "php-shop", "ruby-shop"})
+    @ValueSource(strings = {"shop-app", "node-shop", "go-shop", "php-shop", "ruby-shop", "cs-shop"})
     void 정답의_취약점과_함정이_모두_위험_지점으로_나오고_다른_것은_없다(String app) throws Exception {
         load(app);
         List<String> answer = new ArrayList<>();
@@ -64,7 +64,7 @@ class BenchmarkTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"shop-app", "node-shop", "go-shop", "php-shop", "ruby-shop"})
+    @ValueSource(strings = {"shop-app", "node-shop", "go-shop", "php-shop", "ruby-shop", "cs-shop"})
     void 진입점이_있는_취약점은_경로로도_나온다(String app) throws Exception {
         load(app);
         String paths = call("list_sink_paths", Map.of("repo", app));

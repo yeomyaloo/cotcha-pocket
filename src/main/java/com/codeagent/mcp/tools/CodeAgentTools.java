@@ -74,7 +74,7 @@ public class CodeAgentTools {
     ToolDef loadRepository() {
         return new ToolDef("load_repository", "저장소 불러오기",
                 "분석할 저장소를 불러와 코드 그래프(진입점, 위험 지점, 호출 관계)를 만든다. "
-                        + "언어는 파일 확장자로 판별한다: Java/Spring, Kotlin, Python(FastAPI·Flask·Django), Node.js(package.json 에 express·koa·fastify·NestJS·Next.js 등이 있으면 JS/TS 백엔드), Go(net/http·gin·echo·chi·gorilla·fiber), PHP(Laravel·Symfony·Slim·CodeIgniter·순수 스크립트), Ruby(Rails·Sinatra), 프론트엔드 JS/TS/Vue/HTML. "
+                        + "언어는 파일 확장자로 판별한다: Java/Spring, Kotlin, Python(FastAPI·Flask·Django), Node.js(package.json 에 express·koa·fastify·NestJS·Next.js 등이 있으면 JS/TS 백엔드), Go(net/http·gin·echo·chi·gorilla·fiber), PHP(Laravel·Symfony·Slim·CodeIgniter·순수 스크립트), Ruby(Rails·Sinatra), C#(ASP.NET Core), 프론트엔드 JS/TS/Vue/HTML. "
                         + "path(이 컴퓨터의 폴더) 또는 git_url(공개 https 저장소, 얕은 클론) 중 하나를 준다. "
                         + "같은 저장소를 다시 부르면 다시 파싱(Git 이면 최신 커밋으로 다시 클론)한다. 분석의 첫 단계.",
                 schema(props(
@@ -174,9 +174,10 @@ public class CodeAgentTools {
                         + "Node.js(Express·Koa·Fastify·Hono·Restify 라우터와 app.use 마운트 경로, NestJS @Controller·@Get, Next.js pages/api·app/**/route.ts), "
                         + "Go(net/http ServeMux 와 Go 1.22 \"GET /x/{id}\" 패턴, gin·echo·chi·gorilla/mux·fiber 의 그룹·Mount 경로, 함수로 넘긴 라우터), "
                         + "PHP(Laravel Route 체인·group·resource, Symfony #[Route]·@Route, Slim·CodeIgniter 라우터, $_GET 을 읽는 .php 스크립트), "
-                        + "Ruby(Rails config/routes.rb 의 resources·namespace·member·collection, Sinatra get '/x' do). "
+                        + "Ruby(Rails config/routes.rb 의 resources·namespace·member·collection, Sinatra get '/x' do), "
+                        + "C#(ASP.NET Core 컨트롤러 [Route]·[HttpGet]·기본 규칙 라우트, Minimal API MapGet·MapGroup). "
                         + "FastAPI 는 Depends(...)로 거는 의존 함수(인증 확인 등)를 같이 보여준다. Depends 가 없으면 인증 없이 열린 엔드포인트일 수 있다. "
-                        + "Flask·Django·Node.js·Go·PHP·Ruby 는 인증 단서(login_required, permission_classes, LoginRequiredMixin, before_request, 라우트·그룹·마운트 미들웨어, @UseGuards, Laravel middleware, Symfony IsGranted, Rails before_action·authenticate, Sinatra before 등)를 보여준다. "
+                        + "Flask·Django·Node.js·Go·PHP·Ruby·C# 는 인증 단서(login_required, permission_classes, LoginRequiredMixin, before_request, 라우트·그룹·마운트 미들웨어, @UseGuards, Laravel middleware, Symfony IsGranted, Rails before_action·authenticate, Sinatra before, [Authorize]·RequireAuthorization 등)를 보여준다. "
                         + "단서가 없어도 전역 설정(미들웨어, DEFAULT_PERMISSION_CLASSES)이 막을 수 있으니 확인한다.",
                 schema(props("repo", REPO), List.of("repo")), true, false, args -> {
             List<Node> entries = repo(args).graph().nodes(CodeNodeKind.ENTRY_POINT);
@@ -203,6 +204,9 @@ public class CodeAgentTools {
                         + "요청 값을 echo·response() → XSS). "
                         + "Ruby 도 같은 분류를 쓴다(system·백틱·Kernel#open → COMMAND, eval·ERB.new·render inline: → CODE_INJECTION, 보간한 where·상수가 아닌 order → SQL, "
                         + "File.*·send_file → PATH, Net::HTTP·URI.open → SSRF, Marshal.load → DESERIALIZATION, 요청 값을 redirect_to → OPEN_REDIRECT, 요청 값에 html_safe·raw → XSS). "
+                        + "C# 도 같은 분류를 쓴다(Process.Start·ProcessStartInfo → COMMAND, CSharpScript → CODE_INJECTION, 조립한 문자열의 FromSqlRaw·Dapper·SqlCommand → SQL "
+                        + "(FromSqlInterpolated 는 안전), File.*·PhysicalFile → PATH, HttpClient → SSRF, TypeNameHandling 을 켠 JSON.NET·BinaryFormatter → DESERIALIZATION, "
+                        + "XmlUrlResolver 를 켠 XmlDocument → XXE, 요청 값을 Redirect → OPEN_REDIRECT (LocalRedirect 는 안전), Content(x, \"text/html\") → XSS). "
                         + "프론트엔드(JS/TS/Vue/HTML) 코드의 위험 지점([프론트엔드]: XSS, CODE_INJECTION, OPEN_REDIRECT, TOKEN_STORAGE, "
                         + "POSTMESSAGE, HARDCODED_SECRET)은 HTTP 진입점 경로가 없으므로 list_sink_paths 에 나오지 않는다. "
                         + "진입점에서 닿지 않는 위험 지점도 포함한다.",
@@ -306,7 +310,7 @@ public class CodeAgentTools {
                 schema(props(
                         "repo", REPO,
                         "pattern", string("정규식 (예: @Valid|@Pattern|SecurityFilterChain, Depends\\(|shell=True)"),
-                        "file_glob", string("대상 파일 glob, 저장소 루트 기준 (기본: 저장소 언어의 소스 **.java / **.py / **.{js,ts,mjs,cjs} / **.go / **.php / **.rb, 예: **.yml, src/main/resources/**)")),
+                        "file_glob", string("대상 파일 glob, 저장소 루트 기준 (기본: 저장소 언어의 소스 **.java / **.py / **.{js,ts,mjs,cjs} / **.go / **.php / **.rb / **.cs, 예: **.yml, src/main/resources/**)")),
                         List.of("repo", "pattern")),
                 true, false, args -> {
             LoadedRepository repo = repo(args);
@@ -507,7 +511,7 @@ public class CodeAgentTools {
     static String defaultGlob(java.util.Set<String> languages) {
         java.util.List<String> extensions = new java.util.ArrayList<>();
         if (languages.contains("java") || !(languages.contains("python") || languages.contains("kotlin") || languages.contains("node") || languages.contains("go") || languages.contains("php")
-                || languages.contains("ruby"))) {
+                || languages.contains("ruby") || languages.contains("csharp"))) {
             extensions.add("java");
         }
         if (languages.contains("kotlin")) {
@@ -527,6 +531,9 @@ public class CodeAgentTools {
         }
         if (languages.contains("ruby")) {
             extensions.add("rb");
+        }
+        if (languages.contains("csharp")) {
+            extensions.add("cs");
         }
         return extensions.size() == 1 ? "**." + extensions.get(0) : "**.{" + String.join(",", extensions) + "}";
     }
@@ -560,7 +567,9 @@ public class CodeAgentTools {
             int cut = Math.max(Math.max(owner.lastIndexOf('\\'), owner.lastIndexOf('/')), colons < 0 ? -1 : colons + 1);
             return owner.substring(cut + 1) + (hash < 0 ? "" : qualifiedName.substring(hash));
         }
-        if (qualifiedName != null && ("node".equals(n.prop("language")) || "go".equals(n.prop("language")))) {
+        boolean csharpFile = "csharp".equals(n.prop("language")) && qualifiedName != null
+                && (qualifiedName.indexOf('#') < 0 ? qualifiedName : qualifiedName.substring(0, qualifiedName.indexOf('#'))).endsWith(".cs");
+        if (qualifiedName != null && ("node".equals(n.prop("language")) || "go".equals(n.prop("language")) || csharpFile)) {
             int hash = qualifiedName.indexOf('#');
             String file = hash < 0 ? qualifiedName : qualifiedName.substring(0, hash);
             return file.substring(file.lastIndexOf('/') + 1) + (hash < 0 ? "" : qualifiedName.substring(hash));

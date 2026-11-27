@@ -13,6 +13,8 @@ An evaluation harness that measures how well an audit with this plugin finds vul
 | `php-shop.expected.json` | Its answer key. |
 | `ruby-shop/` | A Ruby (Rails) shop API with **11 real vulnerabilities** and **7 safe look-alikes**, including Ruby-specific ones (`Kernel#open` pipe, `Marshal.load`, ERB template injection, `html_safe`, `allow_other_host: true`). |
 | `ruby-shop.expected.json` | Its answer key. |
+| `cs-shop/` | A C# (ASP.NET Core) shop API with **11 real vulnerabilities** and **8 safe look-alikes**, including .NET-specific ones (`FromSqlRaw` vs `FromSqlInterpolated`, JSON.NET `TypeNameHandling`, `XmlUrlResolver`, `CSharpScript`, `Redirect` vs `LocalRedirect`). |
+| `cs-shop.expected.json` | Its answer key. |
 | `shop-app.expected.json` | The answer key: file, line range, sink line, accepted CWEs and entry point of each item. It lives **outside** `shop-app/` so Claude cannot read it while auditing. |
 | `score.py` | Scores one or more SARIF reports against the answer key: recall, precision, trap false positives, wrong CWE, duplicates and, for several runs, consistency. |
 | `test_score.py` | Tests for the scoring rules. |
@@ -72,6 +74,8 @@ Three blind runs (plugin 0.24.0, cotcha-trail 0.21.0), same instructions as the 
 | `php-shop.expected.json` | 그 정답 파일. |
 | `ruby-shop/` | Ruby(Rails) 쇼핑몰 API. **진짜 취약점 11개**와 **안전한 함정 7개**, Ruby 에만 있는 것(`Kernel#open` 파이프, `Marshal.load`, ERB 템플릿 주입, `html_safe`, `allow_other_host: true`)도 들어 있다. |
 | `ruby-shop.expected.json` | 그 정답 파일. |
+| `cs-shop/` | C#(ASP.NET Core) 쇼핑몰 API. **진짜 취약점 11개**와 **안전한 함정 8개**, .NET 에만 있는 것(`FromSqlRaw` 와 `FromSqlInterpolated`, JSON.NET `TypeNameHandling`, `XmlUrlResolver`, `CSharpScript`, `Redirect` 와 `LocalRedirect`)도 들어 있다. |
+| `cs-shop.expected.json` | 그 정답 파일. |
 | `shop-app.expected.json` | 정답 파일. 항목마다 파일, 줄 범위, 위험 지점 줄, 인정하는 CWE, 진입점을 적었다. Claude 가 분석 중에 읽지 못하도록 `shop-app/` **밖**에 둔다. |
 | `score.py` | SARIF 보고서를 정답과 비교해 채점한다. 재현율, 정밀도, 함정 오탐, 분류 틀림, 중복, 그리고 여러 번 돌렸으면 일관성. |
 | `test_score.py` | 채점 규칙 테스트. |

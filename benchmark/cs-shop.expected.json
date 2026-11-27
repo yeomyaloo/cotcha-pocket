@@ -1,0 +1,272 @@
+{
+  "name": "cs-shop",
+  "description": "C#(ASP.NET Core) 쇼핑몰 API 예제. 요청 값이 위험 호출까지 가는 취약점 11개와, 위험 호출처럼 보이지만 안전한 함정 8개. 정답은 분석 대상 폴더 밖에 둔다.",
+  "vulnerabilities": [
+    {
+      "id": "sql-search",
+      "category": "SQL",
+      "cwe": [
+        "CWE-89"
+      ],
+      "file": "Data/ProductRepository.cs",
+      "lines": [
+        34,
+        37
+      ],
+      "sinkLine": 36,
+      "entryPoint": "GET /api/products/search",
+      "why": "검색어를 FromSqlRaw 의 보간 문자열에 넣는다 (FromSqlRaw 는 보간 값을 매개변수로 바꾸지 않는다)"
+    },
+    {
+      "id": "path-image",
+      "category": "PATH",
+      "cwe": [
+        "CWE-22",
+        "CWE-23",
+        "CWE-73"
+      ],
+      "file": "Controllers/FilesController.cs",
+      "lines": [
+        8,
+        13
+      ],
+      "sinkLine": 12,
+      "entryPoint": "GET /api/images",
+      "why": "file 값을 Path.Combine 으로 붙여 ../ 나 절대 경로로 이미지 폴더 밖 파일을 보낸다"
+    },
+    {
+      "id": "weak-hash-password",
+      "category": "WEAK_CRYPTO",
+      "cwe": [
+        "CWE-327",
+        "CWE-328",
+        "CWE-759",
+        "CWE-916"
+      ],
+      "file": "Services/AuthService.cs",
+      "lines": [
+        10,
+        14
+      ],
+      "sinkLine": 12,
+      "entryPoint": "POST /api/auth/login",
+      "why": "비밀번호를 솔트 없는 MD5 로 저장·비교한다"
+    },
+    {
+      "id": "weak-random-reset",
+      "category": "WEAK_RANDOM",
+      "cwe": [
+        "CWE-330",
+        "CWE-338",
+        "CWE-340"
+      ],
+      "file": "Controllers/AuthController.cs",
+      "lines": [
+        23,
+        34
+      ],
+      "sinkLine": 26,
+      "entryPoint": "POST /api/auth/reset",
+      "why": "비밀번호 재설정 토큰을 System.Random 으로 만든다"
+    },
+    {
+      "id": "redirect-logout",
+      "category": "OPEN_REDIRECT",
+      "cwe": [
+        "CWE-601"
+      ],
+      "file": "Controllers/AuthController.cs",
+      "lines": [
+        36,
+        40
+      ],
+      "sinkLine": 39,
+      "entryPoint": "GET /api/auth/logout",
+      "why": "next 값으로 Redirect 해서 외부 주소로 보낸다 (LocalRedirect 가 아님)"
+    },
+    {
+      "id": "xss-search-page",
+      "category": "XSS",
+      "cwe": [
+        "CWE-79",
+        "CWE-80"
+      ],
+      "file": "Controllers/PagesController.cs",
+      "lines": [
+        12,
+        16
+      ],
+      "sinkLine": 15,
+      "entryPoint": "GET /api/search",
+      "why": "검색어를 인코딩하지 않고 text/html 응답에 넣는다"
+    },
+    {
+      "id": "ssrf-avatar",
+      "category": "SSRF",
+      "cwe": [
+        "CWE-918"
+      ],
+      "file": "Controllers/AccountController.cs",
+      "lines": [
+        16,
+        22
+      ],
+      "sinkLine": 20,
+      "entryPoint": "POST /api/account/avatar",
+      "why": "사용자가 준 URL 로 서버가 요청을 보낸다"
+    },
+    {
+      "id": "deser-cart",
+      "category": "DESERIALIZATION",
+      "cwe": [
+        "CWE-502"
+      ],
+      "file": "Controllers/AccountController.cs",
+      "lines": [
+        24,
+        30
+      ],
+      "sinkLine": 28,
+      "entryPoint": "POST /api/account/cart",
+      "why": "TypeNameHandling.Auto 로 요청 값을 역직렬화해서 $type 으로 임의 타입(가젯)을 만들 수 있다"
+    },
+    {
+      "id": "xxe-wishlist",
+      "category": "XXE",
+      "cwe": [
+        "CWE-611",
+        "CWE-776"
+      ],
+      "file": "Controllers/AccountController.cs",
+      "lines": [
+        32,
+        42
+      ],
+      "sinkLine": 38,
+      "entryPoint": "POST /api/account/import",
+      "why": "XmlUrlResolver 를 켠 XmlDocument 로 요청 본문을 읽어서 외부 엔티티로 서버 파일을 읽을 수 있다"
+    },
+    {
+      "id": "command-export",
+      "category": "COMMAND",
+      "cwe": [
+        "CWE-78",
+        "CWE-77"
+      ],
+      "file": "Controllers/AdminController.cs",
+      "lines": [
+        15,
+        21
+      ],
+      "sinkLine": 18,
+      "entryPoint": "POST /api/admin/export",
+      "why": "dir 값을 /bin/sh -c 명령 문자열에 넣는다 (관리자만 가능하지만 셸 명령 주입)"
+    },
+    {
+      "id": "code-eval",
+      "category": "CODE_INJECTION",
+      "cwe": [
+        "CWE-95",
+        "CWE-94"
+      ],
+      "file": "Controllers/AdminController.cs",
+      "lines": [
+        36,
+        41
+      ],
+      "sinkLine": 39,
+      "entryPoint": "POST /api/admin/pricing/preview",
+      "why": "요청의 formula 를 CSharpScript 로 실행한다 (관리자만 가능하지만 서버 코드 실행)"
+    }
+  ],
+  "safe": [
+    {
+      "id": "sql-sort-allowlist",
+      "category": "SQL",
+      "file": "Data/ProductRepository.cs",
+      "lines": [
+        28,
+        32
+      ],
+      "sinkLine": 31,
+      "why": "정렬 컬럼을 사전(허용 목록)에서만 고른다"
+    },
+    {
+      "id": "sha1-etag",
+      "category": "WEAK_CRYPTO",
+      "file": "Controllers/ProductsController.cs",
+      "lines": [
+        12,
+        19
+      ],
+      "sinkLine": 16,
+      "why": "SHA-1 을 보안이 아닌 ETag 계산에만 쓴다"
+    },
+    {
+      "id": "path-thumb-filename",
+      "category": "PATH",
+      "file": "Controllers/FilesController.cs",
+      "lines": [
+        15,
+        20
+      ],
+      "sinkLine": 19,
+      "why": "Path.GetFileName 으로 디렉터리를 떼서 썸네일 폴더 밖으로 못 나간다"
+    },
+    {
+      "id": "redirect-allowlist",
+      "category": "OPEN_REDIRECT",
+      "file": "Controllers/AuthController.cs",
+      "lines": [
+        42,
+        47
+      ],
+      "sinkLine": 46,
+      "why": "허용 목록에 있는 내부 경로로만 리다이렉트한다"
+    },
+    {
+      "id": "xss-encoded",
+      "category": "XSS",
+      "file": "Controllers/PagesController.cs",
+      "lines": [
+        18,
+        22
+      ],
+      "sinkLine": 21,
+      "why": "HtmlEncoder 로 인코딩한 뒤 넣는다"
+    },
+    {
+      "id": "random-pick",
+      "category": "WEAK_RANDOM",
+      "file": "Controllers/PagesController.cs",
+      "lines": [
+        24,
+        28
+      ],
+      "sinkLine": 27,
+      "why": "추천 항목 고르기에만 쓴다 (보안과 무관)"
+    },
+    {
+      "id": "command-allowlist",
+      "category": "COMMAND",
+      "file": "Controllers/AdminController.cs",
+      "lines": [
+        23,
+        34
+      ],
+      "sinkLine": 30,
+      "why": "셸 없이 pg_dump 를 직접 실행하고 테이블 이름은 허용 목록에서만 고른다"
+    },
+    {
+      "id": "ssrf-payment-fixed-host",
+      "category": "SSRF",
+      "file": "Services/PaymentClient.cs",
+      "lines": [
+        9,
+        12
+      ],
+      "sinkLine": 11,
+      "why": "호스트는 설정 값이고 결제 id 는 DB 값을 Uri.EscapeDataString 한다"
+    }
+  ]
+}

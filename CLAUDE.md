@@ -1,6 +1,6 @@
 # cotcha-pocket
 
-채팅 앱(Claude Code, Claude Desktop)에 연결하는 stdio MCP 서버. Claude가 판단하고, 이 서버는 코드 그래프(Java/Spring, Kotlin, Python/FastAPI·Flask·Django, Node.js·Go·PHP·Ruby 백엔드, 프론트엔드 JS/TS. Java ↔ Kotlin 호출은 엔진이 잇는다)·파일 읽기·발견 기록·보고서를 맡는다. 코드 그래프 엔진은 공용 라이브러리 cotcha-trail(`../cotcha-trail`, 패키지 `com.codeagent.core`)를 cotcha-net 와 같이 쓴다.
+채팅 앱(Claude Code, Claude Desktop)에 연결하는 stdio MCP 서버. Claude가 판단하고, 이 서버는 코드 그래프(Java/Spring, Kotlin, Python/FastAPI·Flask·Django, Node.js·Go·PHP·Ruby·C# 백엔드, 프론트엔드 JS/TS. Java ↔ Kotlin 호출은 엔진이 잇는다)·파일 읽기·발견 기록·보고서를 맡는다. 코드 그래프 엔진은 공용 라이브러리 cotcha-trail(`../cotcha-trail`, 패키지 `com.codeagent.core`)를 cotcha-net 와 같이 쓴다.
 
 ## 명령
 
@@ -20,7 +20,7 @@ python -m unittest discover -s benchmark   # 벤치마크 채점 스크립트 �
 - `McpCodeAgent`: 서버 진입점. 도구는 `tools/CodeAgentTools.all()`, 프롬프트는 `Prompts`.
 - 새 도구는 `CodeAgentTools`에 `ToolDef`를 추가하고 `all()`에 넣는다. 입력 오류는 `ToolException`으로 던진다(isError 결과로 Claude에게 전달됨).
 - 파일 접근은 반드시 `RepoFiles.resolve()`로 경로를 검사한다(저장소 밖 차단).
-- 평가 하네스 `benchmark/` 는 cotcha-net 의 것과 같다(run.py 제외, Node.js 앱 `node-shop`·Go 앱 `go-shop`·PHP 앱 `php-shop`·Ruby 앱 `ruby-shop` 은 여기만). `BenchmarkTest` 가 앱마다 같은 검사를 하니 새 앱은 `@ValueSource` 에 이름을 더한다. 정답 파일은 분석 대상 폴더 밖에 두고, 앱에 힌트 주석을 달지 않는다. 고치면 두 저장소를 같이 맞춘다.
+- 평가 하네스 `benchmark/` 는 cotcha-net 의 것과 같다(run.py 제외, Node.js 앱 `node-shop`·Go 앱 `go-shop`·PHP 앱 `php-shop`·Ruby 앱 `ruby-shop`·C# 앱 `cs-shop` 은 여기만). `BenchmarkTest` 가 앱마다 같은 검사를 하니 새 앱은 `@ValueSource` 에 이름을 더한다. 정답 파일은 분석 대상 폴더 밖에 두고, 앱에 힌트 주석을 달지 않는다. 고치면 두 저장소를 같이 맞춘다.
 - 코드 그래프 엔진(파싱, 진입점 탐지, 위험 지점 규칙)은 cotcha-trail 에 있다. 이 저장소의 `codegraph/CodeGraph`는 `CodeGraphEngine.analyze()` 결과를 메모리 색인으로 옮기는 어댑터다. 규칙을 고치려면 core 를 고치고 버전을 올린 뒤 `build.gradle` 의존 버전을 맞춘다.
 - core 를 소스로 바로 쓰려면 `-PcoreCodeAgentDir=../cotcha-trail`(composite build). 없으면 GitHub Packages 에서 받으므로 `gpr.user`/`gpr.key`(또는 `GITHUB_ACTOR`/`GITHUB_TOKEN`, `read:packages`)가 필요하다.
 - `source/`는 cotcha-net 에서 복사했다. 고치면 두 저장소를 같이 맞춘다.
