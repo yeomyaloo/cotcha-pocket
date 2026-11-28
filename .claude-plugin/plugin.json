@@ -1,7 +1,7 @@
 {
   "name": "cotcha",
   "displayName": "Cotcha: catch security bugs in chat",
-  "version": "0.25.5",
+  "version": "0.25.6",
   "description": "Audit Java/Spring, Kotlin, Python (FastAPI, Flask, Django) , Node.js (Express, NestJS, Next.js) , Go (gin, echo, chi, net/http) , PHP (Laravel, Symfony, Slim) , Ruby (Rails, Sinatra) and C# (ASP.NET Core) source code for security vulnerabilities in chat. Claude plans the audit, investigates entry point to sink paths with a code graph, records findings, re-verifies each one adversarially, and exports Markdown/SARIF reports. Requires Java 17+.",
   "author": {
     "name": "hwiju yeom",
