@@ -129,6 +129,32 @@ Same instructions; the only change is the sentence that links in UI that never r
 - Varied: passkey flaws (run 1 only), chatbot coupon (runs 1 and 2).
 - Consistency 86% (19 of 22 items), mean Jaccard 0.89. No run reported the four hidden frontend routes; they are security through obscurity rather than a code flaw, and the instructions do not ask for them.
 
+### Fifth round (plugin 0.25.6, passkey / OTP / OAuth guidance)
+
+The only change: read passkey (WebAuthn), OTP and OAuth handlers to the end (credential saved for the session user, existing credential ids not re-bound, session only after a verified signature, failures that fall through to the token). ~19 minutes and ~220–245k tokens per run.
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Confirmed findings | 64 (1 rejected) | 64 | 66 |
+| Code items found (18) | 17 | 17 | 18 |
+| Hidden-route items (4) | 0 | 0 | 0 |
+| Recall (22 items) | 77% | 77% | 82% |
+
+- Both passkey flaws were found in every run (1 of 3 in the fourth round). Run 1 also checked and rejected an origin taken from `X-Forwarded-Host`, since the authenticator only signs for the real origin.
+- Misses: admin registration in run 1 (reported one line off, at the Product entry of the generated-model list), chatbot coupon in run 2. Run 3 found every code item.
+- Consistency 91% (20 of 22 items), mean Jaccard 0.93.
+
+Across the rounds (same key, same instructions; each round changed one piece of guidance):
+
+| Round | Plugin | Recall (mean, min–max) | Consistency |
+|---|---|---|---|
+| 2 | 0.25.3 | 65% (59–68%) | 82% |
+| 3 | 0.25.4 | 70% (64–77%) | 82% |
+| 4 | 0.25.5 | 74% (68–82%) | 86% |
+| 5 | 0.25.6 | 79% (77–82%) | 91% |
+
+The 4 hidden frontend routes are never reported, so 82% (18 of 22) is the ceiling for the code items.
+
 ---
 
 # 벤치마크
@@ -260,3 +286,29 @@ node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.
 - 리다이렉트 허용 목록의 옛 항목을 세 번 모두 찾았다(3회차 1/3, 그 전 0/3). 1번은 정답의 코드 항목을 모두 찾았다.
 - 실행마다 다름: passkey 문제(1번만), 챗봇 쿠폰(1·2번).
 - 일관성 86%(22개 중 19개), 평균 자카드 0.89. 숨긴 프런트 라우트 4개는 어느 실행도 보고하지 않았다. 코드 결함이 아니라 숨겨서 지키는 방식이고 지시에서도 찾으라고 하지 않는다.
+
+### 5회차 (플러그인 0.25.6, passkey·OTP·OAuth 지침)
+
+바뀐 것은 하나: passkey(WebAuthn)·OTP·OAuth 처리기를 끝까지 읽으라는 지침(자격 증명은 세션 사용자에게, 기존 자격 증명 id 를 다시 묶지 않음, 서명 검증이 성공했을 때만 세션, 실패가 토큰 발급으로 넘어가는 곳). 실행마다 약 19분·22만~24.5만 토큰.
+
+| | 1번 | 2번 | 3번 |
+|---|---|---|---|
+| 확정 발견 | 64 (기각 1) | 64 | 66 |
+| 코드 항목 찾음 (18개) | 17 | 17 | 18 |
+| 숨긴 라우트 항목 (4개) | 0 | 0 | 0 |
+| 재현율 (22개) | 77% | 77% | 82% |
+
+- passkey 문제 두 개를 세 번 모두 찾았다(4회차 1/3). 1번은 `X-Forwarded-Host` 로 만든 origin 도 살펴봤지만, 인증기가 실제 origin 에만 서명하므로 기각했다.
+- 놓친 것: 1번의 관리자 가입(자동 생성 모델 목록의 Product 줄로 한 줄 어긋나게 보고), 2번의 챗봇 쿠폰. 3번은 코드 항목을 모두 찾았다.
+- 일관성 91%(22개 중 20개), 평균 자카드 0.93.
+
+회차별(같은 정답·같은 지시, 회차마다 지침 하나만 바꿈):
+
+| 회차 | 플러그인 | 재현율 (평균, 최저~최고) | 일관성 |
+|---|---|---|---|
+| 2 | 0.25.3 | 65% (59~68%) | 82% |
+| 3 | 0.25.4 | 70% (64~77%) | 82% |
+| 4 | 0.25.5 | 74% (68~82%) | 86% |
+| 5 | 0.25.6 | 79% (77~82%) | 91% |
+
+숨긴 프런트 라우트 4개는 보고되지 않으므로 코드 항목만으로는 82%(22개 중 18개)가 상한이다.
