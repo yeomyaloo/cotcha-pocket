@@ -120,7 +120,16 @@
       "sinkLine": 136,
       "entryPoint": null,
       "why": "허용 목록을 includes 로 확인해서 다른 URL 에 끼워 넣으면 통과한다 (redirect)",
-      "tier": "core"
+      "tier": "core",
+      "alsoAt": [
+        {
+          "file": "routes/redirect.ts",
+          "lines": [
+            15,
+            18
+          ]
+        }
+      ]
     },
     {
       "id": "redirect-outdated",
@@ -158,7 +167,16 @@
       "sinkLine": 73,
       "entryPoint": null,
       "why": "비밀번호를 솔트 없는 MD5 로 저장한다 (weakPassword)",
-      "tier": "core"
+      "tier": "core",
+      "alsoAt": [
+        {
+          "file": "lib/insecurity.ts",
+          "lines": [
+            41,
+            41
+          ]
+        }
+      ]
     },
     {
       "id": "chatbot-coupon",
@@ -319,7 +337,16 @@
       "sinkLine": 550,
       "entryPoint": null,
       "why": "회원 가입 요청의 role 을 그대로 받아 관리자로 가입한다 (registerAdmin)",
-      "tier": "core"
+      "tier": "core",
+      "alsoAt": [
+        {
+          "file": "models/user.ts",
+          "lines": [
+            76,
+            82
+          ]
+        }
+      ]
     },
     {
       "id": "exposed-metrics",
@@ -339,7 +366,16 @@
       "sinkLine": 771,
       "entryPoint": null,
       "why": "/metrics 를 인증 없이 연다 (exposedMetrics)",
-      "tier": "core"
+      "tier": "core",
+      "alsoAt": [
+        {
+          "file": "server.ts",
+          "lines": [
+            714,
+            716
+          ]
+        }
+      ]
     },
     {
       "id": "admin-section",

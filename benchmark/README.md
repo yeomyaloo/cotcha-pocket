@@ -80,6 +80,24 @@ Three blind runs (plugin 0.25.1), each ~220k tokens and ~18 minutes, 58–64 con
 - Beyond the key, each run reported about 45 more issues, almost all real Juice Shop vulnerabilities: `eval` of the username, JWT `alg: none` / key confusion, hardcoded RSA key, XXE, Zip Slip, YAML deserialization, SSRF, basket and address IDOR, `$where` NoSQL injection, null-byte file bypass, free deluxe upgrade, password change without the old password, stored and DOM XSS, CSRF.
 - Engine gaps the runs pointed out: finale-rest's generated `/api/*` routes and `app.use('/ftp', serveIndex(...))`-style static routes were not listed as entry points; the runs covered them by reading `server.ts`. Fixed in cotcha-trail 0.24.0 (entry points 99 → 175, including `/ftp`, `/encryptionkeys`, `/support/logs` and `/metrics`), and plugin 0.25.2 tells the planner to check operational endpoints (metrics, logs, directory listings, debug pages) for missing authentication. These runs predate both changes.
 
+### Second round (plugin 0.25.3, cotcha-trail 0.25.0)
+
+After the engine fixes above (finale-rest routes, path-scoped `app.use` endpoints, middleware order) and the new operational-endpoint guidance, three more blind runs on a freshly prepared copy (the first copy still had `SOLUTIONS.md` and other hint files because `prepare.py` stopped on a long Windows path; the script now handles long paths). Each run took ~20 minutes and ~200k tokens.
+
+The key now has `alsoAt` for items whose flaw shows in two places, and the scorer accepts either: `/metrics` is registered twice and only the first registration (`server.ts:715`, before the Angular catch-all) is reachable; the redirect allow-list bypass can be reported at the `includes()` check or at `res.redirect`; the MD5 hash at the hash function; admin registration at the `role` attribute of the user model.
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Confirmed findings | 61 | 68 | 58 |
+| Code items found (18) | 13 | 15 | 15 |
+| Hidden-route items (4) | 0 | 0 | 0 |
+| Recall (22 items) | 59% | 68% | 68% |
+
+- Found in every run now: `/metrics` without authentication (0/3 before), plus `/ftp`, `/encryptionkeys` and `/support/logs` listings.
+- Still missed in every run: the stale crypto-currency addresses in the redirect allow-list.
+- Varied between runs: passkey flaws (run 2 only), rate-limit bypass via `X-Forwarded-For` (run 3 only), chatbot coupon (run 3; run 2 reported it as CWE-1039, which the key does not list).
+- Consistency 82% (18 of 22 items with the same outcome in all runs), mean Jaccard 0.83.
+
 ---
 
 # 벤치마크
@@ -162,3 +180,21 @@ node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.
 - 세 번 모두 놓친 것: 리다이렉트 허용 목록에 남은 옛 암호화폐 주소(오래된 설정 문제)와 인증 없이 열린 `/metrics`. 3번은 passkey 문제 두 개도 놓쳤다. 숨긴 프런트 라우트 4개는 어느 실행도 보고하지 않았다(코드 결함이 아니라 숨겨서 지키는 방식이다).
 - 정답 밖으로 실행마다 45개쯤 더 보고했고 거의 모두 Juice Shop 의 진짜 취약점이다: 사용자 이름 `eval`, JWT `alg: none`·키 혼동, 하드코딩한 RSA 키, XXE, Zip Slip, YAML 역직렬화, SSRF, 장바구니·주소 IDOR, `$where` NoSQL 주입, 널 바이트 파일 우회, 무료 디럭스 등급, 기존 비밀번호 없는 비밀번호 변경, 저장형·DOM XSS, CSRF.
 - 실행들이 짚은 엔진 빈틈: finale-rest 가 만드는 `/api/*` 라우트와 `app.use('/ftp', serveIndex(...))` 같은 정적 경로가 진입점 목록에 없었다. 실행들은 `server.ts` 를 직접 읽어 다뤘다. cotcha-trail 0.24.0 에서 고쳤고(진입점 99 → 175, `/ftp`·`/encryptionkeys`·`/support/logs`·`/metrics` 포함), 플러그인 0.25.2 는 계획 단계에서 운영용 엔드포인트(지표, 로그, 디렉터리 목록, 디버그 페이지)의 인증 누락을 보게 한다. 위 실행들은 두 변경 전이다.
+
+### 2회차 (플러그인 0.25.3, cotcha-trail 0.25.0)
+
+위 엔진 수정(finale-rest 라우트, 경로를 준 `app.use` 끝점, 미들웨어 순서)과 운영용 엔드포인트 지침을 넣은 뒤, 새로 만든 사본으로 블라인드 3번을 더 돌렸다(첫 사본은 `prepare.py` 가 Windows 긴 경로에서 멈춰 `SOLUTIONS.md` 같은 힌트 파일이 남아 있었다. 지금은 긴 경로도 처리한다). 실행마다 약 20분·20만 토큰.
+
+같은 약점이 두 곳에 드러나는 항목은 정답에 `alsoAt` 을 두고 채점기가 둘 다 받는다: `/metrics` 는 두 번 등록되는데 Angular catch-all 앞의 첫 등록(`server.ts:715`)만 닿는다. 리다이렉트 허용 목록 우회는 `includes()` 검사나 `res.redirect` 어느 쪽에 보고해도 된다. MD5 는 해시 함수에, 관리자 가입은 사용자 모델의 `role` 속성에 보고해도 된다.
+
+| | 1번 | 2번 | 3번 |
+|---|---|---|---|
+| 확정 발견 | 61 | 68 | 58 |
+| 코드 항목 찾음 (18개) | 13 | 15 | 15 |
+| 숨긴 라우트 항목 (4개) | 0 | 0 | 0 |
+| 재현율 (22개) | 59% | 68% | 68% |
+
+- 이제 세 번 모두 찾음: 인증 없는 `/metrics`(전에는 0/3), `/ftp`·`/encryptionkeys`·`/support/logs` 목록.
+- 여전히 세 번 모두 놓침: 리다이렉트 허용 목록에 남은 옛 암호화폐 주소.
+- 실행마다 다름: passkey 문제(2번만), `X-Forwarded-For` 로 횟수 제한 우회(3번만), 챗봇 쿠폰(3번. 2번은 정답에 없는 CWE-1039 로 보고).
+- 일관성 82%(22개 중 18개가 모든 실행에서 같은 결론), 평균 자카드 0.83.

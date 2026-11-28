@@ -65,6 +65,15 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(r["duplicates"], 1)
         self.assertEqual(r["precision"], 1.0)
 
+    def test_alsoAt_의_다른_위치를_가리켜도_맞힌_것이다(self):
+        expected = json.loads(json.dumps(self.expected))
+        item = next(v for v in expected["vulnerabilities"] if v["id"] == "sql-search")
+        item["alsoAt"] = [{"file": "src/main/java/com/example/shop/Other.java", "lines": [5, 6]}]
+        r = score.score_run(sarif(result("CWE-89", ("src/main/java/com/example/shop/Other.java", 6))), expected, False)
+        self.assertEqual(r["found"], ["sql-search"])
+        r = score.score_run(sarif(result("CWE-89", ("src/main/java/com/example/shop/Other.java", 7))), expected, False)
+        self.assertEqual(r["found"], [])
+
     def test_실행마다_결과가_다르면_일관성이_떨어진다(self):
         a = sarif(result("CWE-89", (SQL, 23)), result("CWE-639", (ORDER, 23)))
         b = sarif(result("CWE-89", (SQL, 23)), result("CWE-89", (SQL, 34)))

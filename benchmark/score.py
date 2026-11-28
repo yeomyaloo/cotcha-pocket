@@ -9,6 +9,7 @@ SARIF 를 여러 개 주면 같은 앱을 여러 번 분석한 것으로 보고,
 
 판정 규칙
 - 발견의 위치(locations, relatedLocations) 중 하나가 정답 항목의 파일·줄 범위 안에 있으면 그 항목을 가리킨 것으로 본다.
+  같은 약점이 여러 곳에 드러나면 정답 항목의 alsoAt([{file, lines}]) 에 다른 위치를 둔다.
 - 취약점 항목을 가리키고 CWE 도 정답 목록에 있으면 맞힌 것(TP)이다. CWE 가 다르면 틀린 분류로 오탐에 센다.
 - 함정(안전한 코드) 항목을 가리키면 함정 오탐이다. 아무 항목도 가리키지 않으면 기타 오탐이다.
 - 기각(REJECTED)된 발견은 SARIF 에 없거나 여기서 뺀다. --confirmed-only 면 CONFIRMED 만 센다.
@@ -56,11 +57,13 @@ def verdict_of(result):
 
 
 def covers(item, uri, line):
-    file = item["file"]
-    if not (uri == file or uri.endswith("/" + file)):
-        return False
-    start, end = item["lines"]
-    return start <= line <= end
+    """정답 항목의 위치(file·lines)나 같은 약점을 보여주는 다른 위치(alsoAt: [{file, lines}]) 안인지"""
+    for place in [item] + list(item.get("alsoAt") or []):
+        file = place["file"]
+        start, end = place["lines"]
+        if (uri == file or uri.endswith("/" + file)) and start <= line <= end:
+            return True
+    return False
 
 
 def classify(result, vulns, traps):
