@@ -155,6 +155,24 @@ Across the rounds (same key, same instructions; each round changed one piece of 
 
 The 4 hidden frontend routes are never reported, so 82% (18 of 22) is the ceiling for the code items.
 
+### Sixth round (plugin 0.25.7, cotcha-trail 0.25.1)
+
+No guidance change. cotcha-trail 0.25.1 fixes a slow path in the Node analyzer (each function's local names were rebuilt on every call lookup, which was quadratic in Juice Shop's large `server.ts`): loading the repository went from ~2 minutes to ~12 seconds, and each run from ~19 to ~10–11 minutes (~230–245k tokens).
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Confirmed findings | 78 | 72 | 60 (1 rejected) |
+| Code items found (18) | 18 | 18 | 18 |
+| Hidden-route items (4) | 0 | 0 | 0 |
+| Recall (22 items) | 82% | 82% | 82% |
+
+- Every run found every code item in the key; consistency 100% (all 22 items with the same outcome), mean Jaccard 1.00.
+- Run 2 said most of its verdict reasons were generic text written in one batch, so its confirmations carry less weight than the others'.
+
+| Round | Plugin | Recall (mean, min–max) | Consistency | Minutes per run |
+|---|---|---|---|---|
+| 6 | 0.25.7 | 82% (82–82%) | 100% | ~10–11 |
+
 ---
 
 # 벤치마크
@@ -312,3 +330,21 @@ node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.
 | 5 | 0.25.6 | 79% (77~82%) | 91% |
 
 숨긴 프런트 라우트 4개는 보고되지 않으므로 코드 항목만으로는 82%(22개 중 18개)가 상한이다.
+
+### 6회차 (플러그인 0.25.7, cotcha-trail 0.25.1)
+
+지침은 그대로. cotcha-trail 0.25.1 이 Node 분석기의 느린 부분을 고쳤다(함수마다 지역 이름 표를 호출을 풀 때마다 다시 만들어서, Juice Shop 의 큰 `server.ts` 에서 제곱으로 느려졌다). 저장소 불러오기가 약 2분에서 약 12초로, 실행 한 번이 약 19분에서 약 10~11분(23만~24.5만 토큰)으로 줄었다.
+
+| | 1번 | 2번 | 3번 |
+|---|---|---|---|
+| 확정 발견 | 78 | 72 | 60 (기각 1) |
+| 코드 항목 찾음 (18개) | 18 | 18 | 18 |
+| 숨긴 라우트 항목 (4개) | 0 | 0 | 0 |
+| 재현율 (22개) | 82% | 82% | 82% |
+
+- 세 번 모두 정답의 코드 항목을 다 찾았다. 일관성 100%(22개 모두 같은 결론), 평균 자카드 1.00.
+- 2번은 판정 이유 대부분을 한 번에 일반 문구로 썼다고 밝혔으니, 그 확정은 다른 실행보다 가볍게 본다.
+
+| 회차 | 플러그인 | 재현율 (평균, 최저~최고) | 일관성 | 실행당 시간 |
+|---|---|---|---|---|
+| 6 | 0.25.7 | 82% (82~82%) | 100% | 약 10~11분 |
