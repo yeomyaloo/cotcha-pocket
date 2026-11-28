@@ -114,6 +114,21 @@ The guidance now also asks for a bypassable redirect check and for allow-list en
 - Varied: passkey flaws and the chatbot coupon (run 3 only).
 - Consistency 82%, mean Jaccard 0.84. No run reported the four hidden frontend routes.
 
+### Fourth round (plugin 0.25.5, links in UI that never renders)
+
+Same instructions; the only change is the sentence that links in UI that never renders (`@if (false)` and the like) do not keep an allow-list entry in use. ~20 minutes and ~220–270k tokens per run. The key also accepts `server.ts:440` (the registration pre-handler that passes the body to finale) for admin registration.
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Confirmed findings | 69 | 74 (+2 uncertain) | 57 |
+| Code items found (18) | 18 | 16 | 15 |
+| Hidden-route items (4) | 0 | 0 | 0 |
+| Recall (22 items) | 82% | 73% | 68% |
+
+- The stale redirect allow-list entries were found in every run (1 of 3 in the third round, 0 of 3 before). Run 1 found every code item in the key.
+- Varied: passkey flaws (run 1 only), chatbot coupon (runs 1 and 2).
+- Consistency 86% (19 of 22 items), mean Jaccard 0.89. No run reported the four hidden frontend routes; they are security through obscurity rather than a code flaw, and the instructions do not ask for them.
+
 ---
 
 # 벤치마크
@@ -230,3 +245,18 @@ node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.
 - 세 번 모두 찾음: `/metrics`, `/ftp`, `/encryptionkeys`, `/support/logs`, `includes()` 리다이렉트 우회, X-Forwarded-For 횟수 제한 우회.
 - 실행마다 다름: passkey 문제와 챗봇 쿠폰(3번만).
 - 일관성 82%, 평균 자카드 0.84. 숨긴 프런트 라우트 4개는 어느 실행도 보고하지 않았다.
+
+### 4회차 (플러그인 0.25.5, 그려지지 않는 화면의 링크)
+
+지시는 같고, 바뀐 것은 그려지지 않는 화면(`@if (false)` 등)의 링크는 허용 목록 항목을 쓰는 것이 아니라는 한 문장뿐이다. 실행마다 약 20분·22만~27만 토큰. 정답은 관리자 가입 위치로 `server.ts:440`(요청 본문을 finale 에 넘기는 가입 전처리기)도 받는다.
+
+| | 1번 | 2번 | 3번 |
+|---|---|---|---|
+| 확정 발견 | 69 | 74 (+불확실 2) | 57 |
+| 코드 항목 찾음 (18개) | 18 | 16 | 15 |
+| 숨긴 라우트 항목 (4개) | 0 | 0 | 0 |
+| 재현율 (22개) | 82% | 73% | 68% |
+
+- 리다이렉트 허용 목록의 옛 항목을 세 번 모두 찾았다(3회차 1/3, 그 전 0/3). 1번은 정답의 코드 항목을 모두 찾았다.
+- 실행마다 다름: passkey 문제(1번만), 챗봇 쿠폰(1·2번).
+- 일관성 86%(22개 중 19개), 평균 자카드 0.89. 숨긴 프런트 라우트 4개는 어느 실행도 보고하지 않았다. 코드 결함이 아니라 숨겨서 지키는 방식이고 지시에서도 찾으라고 하지 않는다.
