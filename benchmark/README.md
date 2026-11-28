@@ -98,6 +98,22 @@ The key now has `alsoAt` for items whose flaw shows in two places, and the score
 - Varied between runs: passkey flaws (run 2 only), rate-limit bypass via `X-Forwarded-For` (run 3 only), chatbot coupon (run 3; run 2 reported it as CWE-1039, which the key does not list).
 - Consistency 82% (18 of 22 items with the same outcome in all runs), mean Jaccard 0.83.
 
+### Third round (plugin 0.25.4, redirect allow-list guidance)
+
+The guidance now also asks for a bypassable redirect check and for allow-list entries nothing links to any more. Three blind runs, ~20 minutes and ~220k tokens each (run 3's first pass stopped before its verdicts and was resumed to finish them). The key gained `server.ts:540` (the finale resource that creates `POST /api/Users`) as another location for admin registration, and CWE-1426 for the chatbot coupon.
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Confirmed findings | 65 | 45 | 58 |
+| Code items found (18) | 15 | 14 | 17 |
+| Hidden-route items (4) | 0 | 0 | 0 |
+| Recall (22 items) | 68% | 64% | 77% |
+
+- The stale crypto-currency entries in the redirect allow-list were found for the first time (run 1). The frontend still has the links, but only inside `@if (false)` blocks; runs 2 and 3 saw the links and called the entries in use. The guidance now says links in UI that never renders do not count.
+- Found in every run: `/metrics`, `/ftp`, `/encryptionkeys`, `/support/logs`, the `includes()` redirect bypass, the X-Forwarded-For rate-limit bypass.
+- Varied: passkey flaws and the chatbot coupon (run 3 only).
+- Consistency 82%, mean Jaccard 0.84. No run reported the four hidden frontend routes.
+
 ---
 
 # 벤치마크
@@ -198,3 +214,19 @@ node-shop 과 같은 지시로 블라인드 3번을 돌렸다(플러그인 0.22.
 - 여전히 세 번 모두 놓침: 리다이렉트 허용 목록에 남은 옛 암호화폐 주소.
 - 실행마다 다름: passkey 문제(2번만), `X-Forwarded-For` 로 횟수 제한 우회(3번만), 챗봇 쿠폰(3번. 2번은 정답에 없는 CWE-1039 로 보고).
 - 일관성 82%(22개 중 18개가 모든 실행에서 같은 결론), 평균 자카드 0.83.
+
+### 3회차 (플러그인 0.25.4, 리다이렉트 허용 목록 지침)
+
+지침에 우회되는 리다이렉트 검사와, 아무도 링크하지 않는 허용 목록 항목을 보라는 내용을 더했다. 블라인드 3번, 실행마다 약 20분·22만 토큰(3번은 첫 실행이 판정 전에 멈춰 이어서 마쳤다). 정답에는 관리자 가입의 다른 위치로 `server.ts:540`(`POST /api/Users` 를 만드는 finale resource)을, 챗봇 쿠폰에 CWE-1426 을 더했다.
+
+| | 1번 | 2번 | 3번 |
+|---|---|---|---|
+| 확정 발견 | 65 | 45 | 58 |
+| 코드 항목 찾음 (18개) | 15 | 14 | 17 |
+| 숨긴 라우트 항목 (4개) | 0 | 0 | 0 |
+| 재현율 (22개) | 68% | 64% | 77% |
+
+- 리다이렉트 허용 목록의 옛 암호화폐 주소를 처음 찾았다(1번). 프런트엔드에 링크가 남아 있지만 `@if (false)` 안에만 있다. 2·3번은 링크를 보고 쓰는 항목이라고 판단했다. 그래서 그려지지 않는 화면의 링크는 쓰는 것이 아니라고 지침에 더했다.
+- 세 번 모두 찾음: `/metrics`, `/ftp`, `/encryptionkeys`, `/support/logs`, `includes()` 리다이렉트 우회, X-Forwarded-For 횟수 제한 우회.
+- 실행마다 다름: passkey 문제와 챗봇 쿠폰(3번만).
+- 일관성 82%, 평균 자카드 0.84. 숨긴 프런트 라우트 4개는 어느 실행도 보고하지 않았다.

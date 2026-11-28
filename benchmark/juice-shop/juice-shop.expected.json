@@ -187,7 +187,8 @@
         "CWE-840",
         "CWE-284",
         "CWE-639",
-        "CWE-77"
+        "CWE-77",
+        "CWE-1426"
       ],
       "file": "routes/chat.ts",
       "lines": [
@@ -344,6 +345,13 @@
           "lines": [
             76,
             82
+          ]
+        },
+        {
+          "file": "server.ts",
+          "lines": [
+            540,
+            540
           ]
         }
       ]
