@@ -370,22 +370,61 @@ public class CodeAgentTools {
         return new ToolDef("submit_verdict", "발견 판정",
                 "발견을 다시 검증한 결과를 기록한다. 보고서를 그대로 믿지 말고 코드를 직접 다시 읽은 뒤 판정한다. "
                         + "confirmed: 외부 입력으로 실제 공격 가능함을 확인. rejected: 방어 장치가 막거나 입력이 외부에서 오지 않음(오탐). "
-                        + "uncertain: 판단에 필요한 코드가 저장소에 없는 등 근거 부족.",
+                        + "uncertain: 판단에 필요한 코드가 저장소에 없는 등 근거 부족. "
+                        + "reasoning 에는 다시 읽은 코드 위치(파일:줄)와 검증에서 새로 확인한 것을 적는다. 발견 설명을 되풀이하면 받지 않는다.",
                 schema(props(
                         "repo", REPO,
                         "finding_id", string("발견 id (예: F1)"),
                         "verdict", enumOf("판정", List.of("confirmed", "rejected", "uncertain")),
                         "reasoning", string("판정 근거 (파일:줄 포함)"),
                         "blocking_controls", string("확인한 방어 장치와 그것이 공격을 막는지"),
-                        "severity", enumOf("검증 후 다시 매긴 심각도 (바꿀 때만)", SEVERITIES)),
+                        "severity", enumOf("검증 후 다시 매긴 심각도 (바꿀 때만)", SEVERITIES),
+                        "verifier", enumOf("누가 검증했는지: independent(조사하지 않은 서브에이전트·사람), self(조사한 쪽이 다시 확인, 기본)",
+                                List.of("independent", "self"))),
                         List.of("repo", "finding_id", "verdict", "reasoning")),
                 false, false, args -> {
+            LoadedRepository repo = repo(args);
             Status status = VERDICTS.get(args.oneOf("verdict", VERDICTS.keySet()));
-            Finding f = findings.verdict(repo(args).id(), args.string("finding_id"), status, args.string("reasoning"),
+            String findingId = args.string("finding_id");
+            String reasoning = args.string("reasoning");
+            Finding target = findings.list(repo.id()).stream().filter(x -> x.id().equalsIgnoreCase(findingId)).findFirst().orElse(null);
+            if (target != null) {
+                checkReasoning(reasoning, target);
+            }
+            String verifier = args.optionalOneOf("verifier", Set.of("independent", "self")).orElse("self");
+            Finding f = findings.verdict(repo.id(), findingId, status, reasoning,
                     args.optionalString("blocking_controls").orElse(null),
-                    args.optionalOneOf("severity", Set.copyOf(SEVERITIES)).orElse(null));
-            return f.id() + " 판정 기록함: " + Reports.label(f.status()) + " (심각도 " + f.effectiveSeverity() + ")";
+                    args.optionalOneOf("severity", Set.copyOf(SEVERITIES)).orElse(null), verifier);
+            return f.id() + " 판정 기록함: " + Reports.label(f.status()) + " (심각도 " + f.effectiveSeverity() + ", "
+                    + (f.verification().independent() ? "독립 검증" : "조사한 쪽이 다시 확인") + ")";
         });
+    }
+
+    /** 파일:줄 (예: routes/login.ts:34, UserService.java:120) */
+    private static final java.util.regex.Pattern FILE_LINE = java.util.regex.Pattern.compile("[\\w./-]+\\.[A-Za-z0-9]+:\\d+");
+
+    /**
+     * 판정 근거가 실제로 코드를 다시 읽은 결과인지 본다. 파일:줄이 없거나, 발견 제목·설명을 빼면 남는 말이 거의 없으면 받지 않는다
+     * (한 번에 스크립트로 같은 문구를 붙여 넣은 판정을 막는다).
+     */
+    static void checkReasoning(String reasoning, Finding finding) {
+        if (!FILE_LINE.matcher(reasoning).find()) {
+            throw new ToolException("reasoning 에 다시 읽은 코드 위치(파일:줄)를 하나 이상 적을 것 (예: routes/login.ts:34)");
+        }
+        String rest = squash(reasoning);
+        for (String known : new String[]{finding.description(), finding.title(), finding.exploitScenario()}) {
+            if (known != null && !known.isBlank()) {
+                rest = rest.replace(squash(known), " ");
+            }
+        }
+        rest = FILE_LINE.matcher(rest).replaceAll(" ").replaceAll("[\\s\\p{Punct}]+", "");
+        if (rest.length() < 20) {
+            throw new ToolException("reasoning 이 발견 내용을 되풀이함. 검증에서 새로 확인한 것(입력 출처, 도달 가능성, 방어 장치, 영향)을 적을 것");
+        }
+    }
+
+    private static String squash(String text) {
+        return text.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ").strip();
     }
 
     ToolDef listFindings() {

@@ -162,7 +162,7 @@ Tool arguments are checked against each tool's schema before it runs. An unknown
 | `read_file` | Read a file with line numbers (400 lines per call) | ✅ |
 | `grep_code` | Regex search (look for defenses). Searches `**.java` / `**.py` by default, depending on the repository | ✅ |
 | `record_finding` | Record a vulnerability (file:line evidence required; pending verification). The analyzed commit is saved with it (Git URL commit, or the folder's `.git` HEAD), and reloading at another commit warns that old findings may be stale | |
-| `submit_verdict` | Verdict for a finding: confirmed / rejected / uncertain | |
+| `submit_verdict` | Verdict for a finding: confirmed / rejected / uncertain. `verifier`: independent (a subagent that did not investigate) or self. Reasoning must cite a re-read `file:line` and say more than the finding; the report counts independent and self verdicts | |
 | `list_findings` | Findings, ordered by verdict and severity | ✅ |
 | `export_report` | Save a Markdown or SARIF 2.1.0 report | |
 | `clear_findings` | Delete all findings of a repository | |
@@ -393,7 +393,7 @@ C:/work/my-api 폴더에서 SQL 인젝션만 찾아줘
 | `read_file` | 줄 번호를 붙여 파일 읽기 (한 번에 400줄) | ✅ |
 | `grep_code` | 정규식으로 코드 검색 (방어 장치 찾기). 기본 대상은 저장소 언어에 따라 `**.java` / `**.py` | ✅ |
 | `record_finding` | 취약점 기록 (근거 코드 위치 필수, 검증 대기 상태). 분석한 커밋(Git 주소의 커밋 또는 폴더의 `.git` HEAD)이 함께 저장되고, 다른 커밋으로 다시 불러오면 예전 발견일 수 있다고 알려준다 | |
-| `submit_verdict` | 발견 판정: confirmed / rejected / uncertain | |
+| `submit_verdict` | 발견 판정: confirmed / rejected / uncertain. `verifier`: independent(조사하지 않은 서브에이전트) 또는 self. 근거에는 다시 읽은 `파일:줄`과 발견에 없던 확인 내용이 있어야 하고, 보고서에 독립·자체 검증 수가 나온다 | |
 | `list_findings` | 발견 목록 (판정·심각도 순) | ✅ |
 | `export_report` | Markdown 또는 SARIF 2.1.0 보고서 저장 | |
 | `clear_findings` | 저장소의 발견 모두 지우기 | |

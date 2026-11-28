@@ -49,13 +49,13 @@ public class FindingStore {
 
     /** 판정을 기록한다. 이미 판정된 발견도 덮어쓴다 (다시 검증한 경우) */
     public synchronized Finding verdict(String repositoryId, String findingId, Status status, String reasoning,
-                                        String blockingControls, String severity) {
+                                        String blockingControls, String severity, String verifier) {
         List<Finding> findings = load(repositoryId);
         for (int i = 0; i < findings.size(); i++) {
             Finding finding = findings.get(i);
             if (finding.id().equalsIgnoreCase(findingId)) {
                 Finding updated = finding.withVerdict(status, new Verification(status.name().toLowerCase(), reasoning,
-                        blockingControls, severity, OffsetDateTime.now().toString()));
+                        blockingControls, severity, OffsetDateTime.now().toString(), verifier));
                 findings.set(i, updated);
                 save(repositoryId, findings);
                 return updated;

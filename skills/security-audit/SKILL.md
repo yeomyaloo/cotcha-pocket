@@ -74,7 +74,8 @@ After investigation, switch sides. For each finding (`list_findings` with `detai
 - **Impact** — what can an attacker actually do? Is the severity inflated?
 
 Then `submit_verdict`: `confirmed`, `rejected` (blocked or not attacker-controlled — a false positive), or `uncertain` (only when the deciding code is outside the repository). Adjust `severity` if needed. Do not reject a finding because another finding covers the same endpoint: a different CWE at a different location is a separate weakness. For a weakness in the code itself (secret, weak hashing, trust-all TLS), having no caller lowers the severity; it is not a reason to reject.
-If subagents are available, use a different subagent from the one that investigated, so the verdict is independent.
+**Make the verification independent.** If you can start subagents (Claude Code's Agent/Task tool), hand the findings to verifier subagents that did not investigate: about 10–15 findings each, run in parallel. Give each one only the repo id, its finding ids and these verification rules (not your investigation notes or conclusions). Each verifier calls `list_findings` (`detail=true`) itself, reads the code with `read_file`/`grep_code`/`get_callers`, tries to prove the finding wrong, and calls `submit_verdict` with `verifier="independent"`. If you cannot start subagents, verify yourself with `verifier="self"`, one finding at a time.
+Either way, the reasoning must say what you re-read (`file:line`) and what you checked that the finding did not already say: where the value really comes from, what sits in front of the endpoint, what the defense does. Do not write verdicts in a batch script or reuse one sentence for many findings; `submit_verdict` rejects reasoning without a `file:line` or that only repeats the finding. When a verdict depends on library code that is not in the repository, say so and use `uncertain` unless the repository itself shows the behavior.
 
 ## 4. Report
 

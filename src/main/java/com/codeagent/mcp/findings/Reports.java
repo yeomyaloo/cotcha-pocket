@@ -44,7 +44,13 @@ public final class Reports {
         md.append("- 확정 ").append(counts.get(Status.CONFIRMED))
                 .append(" · 검증 대기 ").append(counts.get(Status.OPEN))
                 .append(" · 판단 불가 ").append(counts.get(Status.UNCERTAIN))
-                .append(" · 기각(오탐) ").append(counts.get(Status.REJECTED)).append("\n\n");
+                .append(" · 기각(오탐) ").append(counts.get(Status.REJECTED)).append('\n');
+        long verified = findings.stream().filter(f -> f.verification() != null).count();
+        long independent = findings.stream().filter(f -> f.verification() != null && f.verification().independent()).count();
+        if (verified > 0) {
+            md.append("- 검증: 독립 검증 ").append(independent).append(" · 조사한 쪽이 다시 확인 ").append(verified - independent).append('\n');
+        }
+        md.append('\n');
         if (shown.isEmpty()) {
             md.append("보고할 발견이 없습니다.\n");
             return md.toString();
@@ -76,7 +82,8 @@ public final class Reports {
                 }
             }
             if (f.verification() != null) {
-                md.append("\n**검증**\n\n").append(f.verification().reasoning()).append('\n');
+                md.append("\n**검증** (").append(f.verification().independent() ? "독립 검증" : "조사한 쪽이 다시 확인").append(")\n\n")
+                        .append(f.verification().reasoning()).append('\n');
                 if (f.verification().blockingControls() != null && !f.verification().blockingControls().isBlank()) {
                     md.append("\n- 확인한 방어 장치: ").append(f.verification().blockingControls()).append('\n');
                 }
@@ -122,7 +129,8 @@ public final class Reports {
             result.put("properties", Map.of(
                     "findingId", f.id(),
                     "verdict", f.status().name(),
-                    "severity", nullToDash(f.effectiveSeverity())));
+                    "severity", nullToDash(f.effectiveSeverity()),
+                    "verifier", f.verification() == null ? "-" : nullToDash(f.verification().verifier())));
             results.add(result);
         }
         Map<String, Object> sarif = Map.of(

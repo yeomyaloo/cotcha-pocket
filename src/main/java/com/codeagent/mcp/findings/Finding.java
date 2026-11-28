@@ -27,9 +27,16 @@ public record Finding(String id, String title, String cwe, String severity, Stri
     public record Evidence(String file, int line, String note) {
     }
 
-    /** @param severity 검증 후 다시 매긴 심각도 (없으면 조사 단계 값을 쓴다) */
+    /**
+     * @param severity 검증 후 다시 매긴 심각도 (없으면 조사 단계 값을 쓴다)
+     * @param verifier independent(조사하지 않은 검증 담당) 또는 self(조사한 쪽이 다시 확인). 예전 기록은 null
+     */
     public record Verification(String verdict, String reasoning, String blockingControls, String severity,
-                               String verifiedAt) {
+                               String verifiedAt, String verifier) {
+
+        public boolean independent() {
+            return "independent".equals(verifier);
+        }
     }
 
     /** 검증 후 심각도가 있으면 그것을, 없으면 조사 단계 심각도 */

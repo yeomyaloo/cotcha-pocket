@@ -92,7 +92,13 @@ final class Prompts {
                 - 방어 장치: 위의 장치 중 하나라도 공격을 막는가?
                 - 영향: 성공하면 실제로 무엇을 할 수 있는가? 심각도가 과장되지 않았는가?
                 판단이 서면 submit_verdict 로 confirmed / rejected / uncertain 을 기록합니다. uncertain 은 저장소에 근거 코드가 없을 때만 씁니다.
-                서브에이전트를 쓸 수 있으면, 조사와 다른 서브에이전트에게 검증을 맡겨 판단이 섞이지 않게 합니다.
+                검증은 독립적으로 합니다. 서브에이전트를 쓸 수 있으면(Claude Code 의 Agent·Task 도구) 조사하지 않은 검증 서브에이전트에게
+                발견 10~15개씩 나눠 나란히 맡깁니다. 저장소 id, 맡을 발견 id, 이 검증 규칙만 주고 조사 메모나 결론은 주지 않습니다.
+                검증 서브에이전트는 list_findings(detail=true) 로 직접 보고 코드를 다시 읽어 발견이 틀렸음을 보이려 해 본 뒤
+                submit_verdict(verifier="independent") 로 기록합니다. 서브에이전트를 쓸 수 없으면 직접 하나씩 검증하고 verifier="self" 로 남깁니다.
+                어느 쪽이든 reasoning 에는 다시 읽은 위치(파일:줄)와 발견에 없던 확인 내용(값의 실제 출처, 진입점 앞의 장치, 방어 장치가 하는 일)을 적습니다.
+                판정을 스크립트로 한꺼번에 쓰거나 같은 문장을 여러 발견에 붙이지 않습니다(파일:줄이 없거나 발견을 되풀이한 근거는 submit_verdict 가 받지 않음).
+                저장소에 없는 라이브러리 코드에 판정이 달려 있으면 그렇다고 적고, 저장소 안에서 동작이 드러나지 않으면 uncertain 으로 둡니다.
 
                 ## 4. 보고
                 export_report(format=markdown) 로 보고서를 저장하고, 확정된 취약점을 심각도 순으로 요약해 주세요.
@@ -105,6 +111,8 @@ final class Prompts {
                 저장소 %s 의 검증 대기 발견을 다시 검증해 주세요. 모든 설명은 한국어로 씁니다.
                 list_findings(repo="%s", status="OPEN", detail=true) 로 목록을 보고, 발견마다 보고서를 그대로 믿지 말고
                 read_file·grep_code·get_callers 로 코드를 직접 다시 읽어 입력 출처, 도달 가능성, 방어 장치, 영향을 확인합니다.
+                발견을 조사하지 않았다면 verifier="independent", 직접 조사한 발견이면 verifier="self" 로 남깁니다.
+                reasoning 에는 다시 읽은 위치(파일:줄)와 발견에 없던 확인 내용을 적고, 같은 문장을 여러 발견에 붙이지 않습니다.
                 판단이 서면 submit_verdict 로 confirmed / rejected / uncertain 을 기록하고, 끝나면 판정 결과를 표로 요약해 주세요.
                 """.formatted(repo, repo);
     }

@@ -226,16 +226,24 @@ class CodeAgentToolsTest {
                 "severity", "low", "confidence", "low", "description", "상수만 반환",
                 "evidence", List.of(Map.of("file", "src/main/java/com/example/vuln/web/UserController.java", "line", 46, "note", "ok"))));
 
+        // 코드 위치가 없거나 발견 설명을 되풀이한 판정 근거는 받지 않는다
+        assertThatThrownBy(() -> call("submit_verdict", Map.of("repo", "vulnerable-app", "finding_id", "F1", "verdict", "confirmed",
+                "reasoning", "검증 없음"))).hasMessageContaining("파일:줄");
+        assertThatThrownBy(() -> call("submit_verdict", Map.of("repo", "vulnerable-app", "finding_id", "F1", "verdict", "confirmed",
+                "reasoning", "name 이 SQL 문자열에 이어 붙여진다 (UserServiceImpl.java:24)"))).hasMessageContaining("되풀이");
         assertThat(call("submit_verdict", Map.of("repo", "vulnerable-app", "finding_id", "F1", "verdict", "confirmed",
-                "reasoning", "검증 없음", "severity", "critical"))).contains("확정", "심각도 critical");
-        call("submit_verdict", Map.of("repo", "vulnerable-app", "finding_id", "f2", "verdict", "rejected", "reasoning", "상수"));
+                "reasoning", "UserController.java:30 에서 요청 파라미터 name 이 그대로 넘어오고 UserServiceImpl.java:24 까지 검증·바인딩이 없다",
+                "severity", "critical", "verifier", "independent"))).contains("확정", "심각도 critical", "독립 검증");
+        call("submit_verdict", Map.of("repo", "vulnerable-app", "finding_id", "f2", "verdict", "rejected",
+                "reasoning", "UserController.java:46 은 고정 문자열 \"ok\" 만 돌려주므로 사용자 정보가 나가지 않는다"));
 
         assertThat(call("list_findings", Map.of("repo", "vulnerable-app")))
                 .isEqualTo("F1 [확정] critical CWE-89 사용자 검색 API의 SQL 인젝션 · GET /api/users/search\n"
                         + "F2 [기각(오탐)] low CWE-200 헬스 체크 정보 노출");
 
         String markdown = call("export_report", Map.of("repo", "vulnerable-app"));
-        assertThat(markdown).contains("확정 1 · 검증 대기 0 · 판단 불가 0 · 기각(오탐) 1", "## F1. 사용자 검색 API의 SQL 인젝션")
+        assertThat(markdown).contains("확정 1 · 검증 대기 0 · 판단 불가 0 · 기각(오탐) 1", "검증: 독립 검증 1 · 조사한 쪽이 다시 확인 1",
+                        "**검증** (독립 검증)", "## F1. 사용자 검색 API의 SQL 인젝션")
                 .doesNotContain("## F2.");
         Path saved = Path.of(markdown.substring("저장함: ".length(), markdown.indexOf('\n')));
         assertThat(saved).startsWith(workspace.reports()).exists();
